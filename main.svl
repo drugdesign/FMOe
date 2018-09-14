@@ -1,5 +1,5 @@
-local function GetBaseDirectory []
-    return GetRC ['FMOE.base', '$HOME/moefiles/fmoe'];
+local function GetAjfDirectory []
+    return fcat[GetRC ['FMOE.base', '$HOME/moefiles/fmoe'], 'ajf'];
 endfunction
 
 local function G_DetachMarker [color, bda, baa]
@@ -587,7 +587,7 @@ global function FMOInterface []
   local target;
 
   function GetTemplates[]
-    local templates = ftail fbase flist [fcat [GetBaseDirectory[], 'ajf'], '*.ajf'];
+    local templates = ftail fbase flist [GetAjfDirectory[], '*.ajf'];
     local mSample = templates <> 'sample';
 
     if orE mSample then
@@ -713,7 +713,7 @@ global function FMOInterface []
         continue;
       endif
 
-      local template = fcat[GetBaseDirectory[], 'ajf', tok_cat[vals.TemplateSelector, '.ajf']];
+      local template = fcat[GetAjfDirectory[], tok_cat[vals.TemplateSelector, '.ajf']];
       FMOWriteFiles [output(1), template, Atoms[], *detachedBonds, output(2)];
       Warning 'Write done!';
 
