@@ -207,8 +207,8 @@ const PANEL = [
         resizeH: 1
       ],
       Button: [
-        name: 'SplitProtein',
-        text: 'split protein'
+        name: 'Fragmentation',
+        text: 'fragmentation'
       ],
       Button: [
         name: 'AddBond',
@@ -227,8 +227,8 @@ const PANEL = [
       header: '#{+4n}\tT{-1t}\tRes.{+6t}\tBDA{+7t}\tBAA{+7t}',
       headerBubbleHelp: tok_cat [
         '#: index\n',
-        'T: split type\n',
-        '   P: split protein\n',
+        'T: bond split type\n',
+        '   A: auto\n',
         '   M: manual\n',
         'Res.: residue name\n',
         'BDA: bond detached atom\n',
@@ -663,18 +663,18 @@ global function FMOInterface []
     *detachedBonds = db | igen length db <> index;
   endfunction
 
-  AddToList [apt CreateBond [FMOSplitProtein Chains[], 'protein', 0xffffff], detachedBonds];
+  AddToList [apt CreateBond [FMOSplitProtein Chains[], 'auto', 0xffffff], detachedBonds];
   UpdateLists[];
   loop
     local [vals, trigger] = WindowWait wkey;
 
     UnHighlightBond[];
 
-    if trigger === 'SplitProtein' then
+    if trigger === 'Fragmentation' then
       RemoveByType [detachedBonds, 'protein'];
       GClearVertexData *focusedDish;
 
-      AddToList [apt CreateBond [FMOSplitProtein Chains[], 'protein', 0xffffff], detachedBonds];
+      AddToList [apt CreateBond [FMOSplitProtein Chains[], 'auto', 0xffffff], detachedBonds];
       UpdateLists[];
 
     elseif trigger === 'DetachedBondList' then
