@@ -1,0 +1,4 @@
+MENU APPEND "RightButtonBar"
+    SEPARATOR
+    "FMO Tool" exec "FMOInterface[]"
+ENDMENU

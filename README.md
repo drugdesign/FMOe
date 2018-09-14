@@ -17,5 +17,6 @@ installation
     ```
     local function main []
         load '$HOME/moefiles/FMOE/main.svl';
+        ReadMenuFile '$HOME/moefiles/FMOE/menu';  // add menu item (optional)
     endfunction
     ```
