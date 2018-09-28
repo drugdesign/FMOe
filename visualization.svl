@@ -1,0 +1,169 @@
+function QuotRem [n, d]
+    return [floor (n / d), mod [n, d]];
+endfunction
+
+function ParseFragAttributes [fnum, num_frags]
+    local fattr = [];
+    local [frag16q, frag16r] = QuotRem [num_frags, 16];
+    for frag16q loop
+        fattr = cat [fattr, (fread [fnum, '{n:5*16}\n'])(1)(1)];
+    endloop
+    if frag16r <> 0 then
+        fattr = cat [
+            fattr,
+            (fread [fnum, tok_cat ['{n:5*', totok frag16r, '}\n']])(1)(1)
+        ];
+    endif
+    return fattr;
+endfunction
+
+global function ParseAbinitMpCheckPointFile fnum
+    local [version, comment] = (fread [fnum, 'CPF Ver.{t:}{t:}\n'])(1);
+    local [num_atoms, num_frags] = (fread [fnum, '{n:5}{n:5}\n'])(1);
+    
+    local atoms = [];
+    for num_atoms loop
+        local [
+            uid, element, atom_type, res_name, res_index, frag_index, x, y, z,
+            hf_mul, mp2_mul, hf_nbo, mp2_nbo, hf_esp, mp2_esp
+        ] = (fread [fnum, '{n:5} {t:2} {t:4} {t:3} {n:4} {n:4} {n:12*9}\n'])(1);
+        atoms = append [atoms, [
+            uid: uid, element: element, atom_type: atom_type, res_name: res_name,
+            res_index: res_index, frag_index: frag_index, x: x, y: y, z: z,
+            hf_mul: hf_mul, mp2_mul: mp2_mul, hf_nbo: hf_nbo, mp2_nbo: mp2_nbo,
+            hf_esp: hf_esp, mp2_esp: mp2_esp
+        ]];
+    endloop
+    
+    local num_electrons_per_frags = ParseFragAttributes [fnum, num_frags];
+    local num_bonds_per_frags = ParseFragAttributes [fnum, num_frags];
+    local num_bonds = add num_bonds_per_frags;
+    local bda_baas = [];
+    for num_bonds loop
+        // TODO: inverse?
+        local [bda, baa] = (fread [fnum, '{n:5}{n:5}\n'])(1);
+        bda_baas = append [bda_baas, [bda: bda, baa: baa]];
+    endloop
+    
+    local i, j, distances = [];
+    for i = 2, num_frags loop
+        for j = 1, i - 1 loop
+            distances = append [distances, (fread [fnum, '{n:*3}\n'])(1)(1)(3)];
+        endloop
+    endloop
+    
+    local dipoles = [];
+    for num_frags loop
+        local [hf_x, hf_y, hf_z, mp2_x, mp2_y, mp2_z] = (fread [fnum, '{n:*6}'])(1)(1);
+        dipoles = append [dipoles,
+            [
+                hf: [x: hf_x, y: hf_y, z: hf_z],
+                mp2: [x: mp2_x, y: mp2_y, z: mp2_z]
+            ]
+        ];
+    endloop
+    local [basisset, electronic_state, method] = freadb [fnum, 'line', 3];
+    local [ao_popl_approx, point_charge_approx, dimeres_approx] = (fread [fnum, '{n:*3}'])(1)(1);
+    local repulsion_energy = (fread [fnum, '{n:}\n'])(1);
+    local electronic_energy = (fread [fnum, '{n:}\n'])(1);
+    local total_energy = (fread [fnum, '{n:}\n'])(1);
+    
+    local monomers = [];
+    for num_frags loop
+        local [[m_repl, m_ele, m_mp2, m_mp3], [ao, mo]] = (fread [fnum, '{n:24*4}{n:12*2}\n'])(1);
+        monomers = append [monomers, [
+            repulsion: m_repl,
+            electronic: m_ele,
+            mp2: m_mp2,
+            mp3: m_mp3,
+            ao: ao,
+            mo: mo
+        ]];
+    endloop
+    
+    local dimers = [];
+    local repl, ele, es, mp2, scs_mp2, mp3, scs_mp3, hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse;
+    local pieda_ex, pieda_ct_mix, pieda_amount_of_ct;
+    for i = 2, num_frags loop
+        for j = 1, i - 1 loop
+            if version == '4.201' then
+                [
+                    repl, ele, es,
+                    mp2, scs_mp2,
+                    mp3, scs_mp3,
+                    hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse,
+                    pieda_ex, pieda_ct_mix, pieda_amount_of_ct
+                ] = (fread [fnum, '{n:24*15}\n'])(1)(1);
+                dimers = append [dimers, [
+                    repulsion: repl,
+                    electronic: ele,
+                    electrostatic: es,
+                    mp2: mp2, scs_mp2: scs_mp2,
+                    mp3: mp3, scs_mp3: scs_mp3,
+                    hf_bsse: hf_bsse,
+                    mp2_bsse: mp2_bsse, scs_mp2_bsse: scs_mp2_bsse,
+                    mp3_bsse: mp3_bsse, scs_mp3_bsse: scs_mp3_bsse,
+                    exchange_repulsion: pieda_ex,
+                    charge_transfer: pieda_ct_mix,
+                    amount_of_charge_transfer: pieda_amount_of_ct
+                ]];
+            else  // 4.2
+                [
+                    repl, ele, es,
+                    mp2, scs_mp2,
+                    mp3, scs_mp3,
+                    hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse
+                ] = (fread [fnum, '{n:24*12}\n'])(1)(1);
+                dimers = append [dimers, [
+                    repulsion: repl,
+                    electronic: ele,
+                    electrostatic: es,
+                    mp2: mp2, scs_mp2: scs_mp2,
+                    mp3: mp3, scs_mp3: scs_mp3,
+                    hf_bsse: hf_bsse,
+                    mp2_bsse: mp2_bsse, scs_mp2_bsse: scs_mp2_bsse,
+                    mp3_bsse: mp3_bsse, scs_mp3_bsse: scs_mp3_bsse
+                ]];
+            endif
+        endloop
+    endloop
+
+    return [
+        version: version,
+        comment: comment,
+        num_atoms: num_atoms,
+        num_frags: num_frags,
+        atoms: atoms,
+        monomers: [
+            num_electrons: num_electrons_per_frags,
+            num_bonds: num_bonds_per_frags,
+            dipoles: dipoles,
+            energy: monomers
+        ],
+        bda_baas: bda_baas,
+        dimers: [
+            distances: distances,
+            energy: dimers
+        ],
+        basisset: basisset,
+        electronic_state: electronic_state,
+        method: method,
+        approximation: [
+            ao_population: ao_popl_approx,
+            point_charge: point_charge_approx,
+            dimer_es: dimeres_approx
+        ],
+        energy: [
+            repulsion: repulsion_energy,
+            electronic: electronic_energy,
+            total: total_energy
+        ]
+    ];
+endfunction
+
+
+function main []
+    local file = fopenr 'Ubiquitine_MD_00004700_MP2-631Gd.cpf';
+    local a = ParseAbinitMpCheckPointFile file;
+    fclose file;
+endfunction
