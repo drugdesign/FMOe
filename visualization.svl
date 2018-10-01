@@ -24,11 +24,11 @@ global function ParseAbinitMpCheckPointFile fnum
     local atoms = [];
     for num_atoms loop
         local [
-            uid, element, atom_type, res_name, res_index, frag_index, x, y, z,
-            hf_mul, mp2_mul, hf_nbo, mp2_nbo, hf_esp, mp2_esp
-        ] = (fread [fnum, '{n:5} {t:2} {t:4} {t:3} {n:4} {n:4} {n:12*9}\n'])(1);
+            uid, element, atom_type, res_name, res_index, frag_index,
+            [x, y, z, hf_mul, mp2_mul, hf_nbo, mp2_nbo, hf_esp, mp2_esp]
+        ] = (fread [fnum, '{n:5} {t:2} {c:*4} {t:3} {n:4} {n:4} {n:12*9}\n'])(1);
         atoms = append [atoms, [
-            uid: uid, element: element, atom_type: atom_type, res_name: res_name,
+            uid: uid, element: element, atom_type: token atom_type, res_name: res_name,
             res_index: res_index, frag_index: frag_index, x: x, y: y, z: z,
             hf_mul: hf_mul, mp2_mul: mp2_mul, hf_nbo: hf_nbo, mp2_nbo: mp2_nbo,
             hf_esp: hf_esp, mp2_esp: mp2_esp
