@@ -162,8 +162,45 @@ global function ParseAbinitMpCheckPointFile fnum
 endfunction
 
 
+const STANDARD_RESIDUES = [
+    'ALA', 'ARG', 'ASN', 'ASP', 'CYS',
+    'GLN', 'GLU', 'GLY', 'HIS', 'ILE',
+    'LEU', 'LYS', 'MET', 'PHE', 'PRO',
+    'SER', 'THR', 'TRP', 'TYR', 'VAL'
+];
+
+function _IsStandardResidue res
+    return orE eqE [STANDARD_RESIDUES, res];
+endfunction
+
+function IsStandardResidue res
+    return app _IsStandardResidue res;
+endfunction
+
+global function AbinitMpCheckPointFileToPDBFile [cpf, fnum]
+    local atom;
+    for atom in cpf.atoms loop
+        local header;
+        if IsStandardResidue atom.res_name then
+            header = 'ATOM  ';
+        else
+            header = 'HETATM';
+        endif
+        fwrite [
+            fnum,
+            '{t:}{n:5} {t:4} {t:3} A{n:4}    {n:8.3f}{n:8.3f}{n:8.3f}  1.00  1.00          {t:2}\n',
+            header, atom.uid, atom.atom_type, atom.res_name, atom.res_index,
+            atom.x, atom.y, atom.z, atom.element
+        ];
+    endloop
+endfunction
+
+
 function main []
-    local file = fopenr 'Ubiquitine_MD_00004700_MP2-631Gd.cpf';
-    local a = ParseAbinitMpCheckPointFile file;
-    fclose file;
+    local cpf_file = fopenr 'Ubiquitine_MD_00004700_MP2-631Gd.cpf';
+    local pdb_file = fopenw 'Ubiquitine_MD_00004700_MP2-631Gd.pdb';
+    local cpf = ParseAbinitMpCheckPointFile cpf_file;
+    AbinitMpCheckPointFileToPDBFile [cpf, pdb_file];
+    fclose cpf_file;
+    fclose pdb_file;
 endfunction
