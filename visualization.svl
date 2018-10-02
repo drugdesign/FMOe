@@ -1,3 +1,6 @@
+const HARTREE = 627.509474;
+
+
 function QuotRem [n, d]
     return [floor (n / d), mod [n, d]];
 endfunction
@@ -26,8 +29,9 @@ global function ParseAbinitMpCheckPointFile fnum
     local [version, comment] = (fread [fnum, 'CPF Ver.{t:}{t:}\n'])(1);
     local [num_atoms, num_frags] = (fread [fnum, '{n:5}{n:5}\n'])(1);
 
-    local atoms = [];
-    for num_atoms loop
+    local atoms = [], frag_atoms = [];
+    local i;
+    for i = 1, num_atoms loop
         local [
             uid, element, atom_type, res_name, res_index, frag_index,
             [x, y, z, hf_mul, mp2_mul, hf_nbo, mp2_nbo, hf_esp, mp2_esp]
@@ -38,11 +42,14 @@ global function ParseAbinitMpCheckPointFile fnum
             hf_mul: hf_mul, mp2_mul: mp2_mul, hf_nbo: hf_nbo, mp2_nbo: mp2_nbo,
             hf_esp: hf_esp, mp2_esp: mp2_esp
         ]];
+        frag_atoms(frag_index) = append[frag_atoms(frag_index), i];
     endloop
 
-    local num_electrons_per_frags = ParseFragAttributes [fnum, num_frags];
-    local num_bonds_per_frags = ParseFragAttributes [fnum, num_frags];
-    local num_bonds = add num_bonds_per_frags;
+    local monomers = [];
+    monomers.atom_indices = frag_atoms;
+    monomers.num_electrons = ParseFragAttributes [fnum, num_frags];
+    monomers.num_bonds = ParseFragAttributes [fnum, num_frags];
+    local num_bonds = add monomers.num_bonds;
     local bda_baas = [];
 
     for num_bonds loop
@@ -51,23 +58,20 @@ global function ParseAbinitMpCheckPointFile fnum
         bda_baas = append [bda_baas, [bda: bda, baa: baa]];
     endloop
 
-    local i, j, distances = [];
+    local j, dimers = [];
     for i = 2, num_frags loop
         for j = 1, i - 1 loop
-            distances = append [distances, (fread [fnum, '{n:*3}\n'])(1)(1)(3)];
+            dimers.distances = append [dimers.distances, (fread [fnum, '{n:*3}\n'])(1)(1)(3)];
         endloop
     endloop
 
     local dipoles = [];
     for num_frags loop
         local [hf_x, hf_y, hf_z, mp2_x, mp2_y, mp2_z] = (fread [fnum, '{n:*6}'])(1)(1);
-        dipoles = append [dipoles,
-            [
-                hf: [x: hf_x, y: hf_y, z: hf_z],
-                mp2: [x: mp2_x, y: mp2_y, z: mp2_z]
-            ]
-        ];
+        dipoles.hf = append [dipoles.hf, [x: hf_x, y: hf_y, z: hf_z]];
+        dipoles.mp2 = append [dipoles.mp2, [x: mp2_x, y: mp2_y, z: mp2_z]];
     endloop
+    monomers.dipoles = dipoles;
 
     local [basisset, electronic_state, method] = freadb [fnum, 'line', 3];
     local [ao_popl_approx, point_charge_approx, dimeres_approx] = (fread [fnum, '{n:*3}'])(1)(1);
@@ -75,20 +79,16 @@ global function ParseAbinitMpCheckPointFile fnum
     local electronic_energy = (fread [fnum, '{n:}\n'])(1);
     local total_energy = (fread [fnum, '{n:}\n'])(1);
 
-    local monomers = [];
     for num_frags loop
         local [[m_repl, m_ele, m_mp2, m_mp3], [ao, mo]] = (fread [fnum, '{n:24*4}{n:12*2}\n'])(1);
-        monomers = append [monomers, [
-            repulsion: m_repl,
-            electronic: m_ele,
-            mp2: m_mp2,
-            mp3: m_mp3,
-            ao: ao,
-            mo: mo
-        ]];
+        monomers.repulsion = append [monomers.repulsion, m_repl];
+        monomers.electronic = append [monomers.electronic, m_ele];
+        monomers.mp2 = append [monomers.mp2, m_mp2];
+        monomers.mp3 = append [monomers.mp3, m_mp3];
+        monomers.ao = append [monomers.ao, ao];
+        monomers.mo = append [monomers.mo, mo];
     endloop
 
-    local dimers = [];
     local repl, ele, es, mp2, scs_mp2, mp3, scs_mp3, hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse;
     local pieda_ex, pieda_ct_mix, pieda_amount_of_ct;
     for i = 2, num_frags loop
@@ -101,19 +101,6 @@ global function ParseAbinitMpCheckPointFile fnum
                     hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse,
                     pieda_ex, pieda_ct_mix, pieda_amount_of_ct
                 ] = (fread [fnum, '{n:24*15}\n'])(1)(1);
-                dimers = append [dimers, [
-                    repulsion: repl,
-                    electronic: ele,
-                    electrostatic: es,
-                    mp2: mp2, scs_mp2: scs_mp2,
-                    mp3: mp3, scs_mp3: scs_mp3,
-                    hf_bsse: hf_bsse,
-                    mp2_bsse: mp2_bsse, scs_mp2_bsse: scs_mp2_bsse,
-                    mp3_bsse: mp3_bsse, scs_mp3_bsse: scs_mp3_bsse,
-                    exchange_repulsion: pieda_ex,
-                    charge_transfer: pieda_ct_mix,
-                    amount_of_charge_transfer: pieda_amount_of_ct
-                ]];
             else  // 4.2
                 [
                     repl, ele, es,
@@ -121,16 +108,24 @@ global function ParseAbinitMpCheckPointFile fnum
                     mp3, scs_mp3,
                     hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse
                 ] = (fread [fnum, '{n:24*12}\n'])(1)(1);
-                dimers = append [dimers, [
-                    repulsion: repl,
-                    electronic: ele,
-                    electrostatic: es,
-                    mp2: mp2, scs_mp2: scs_mp2,
-                    mp3: mp3, scs_mp3: scs_mp3,
-                    hf_bsse: hf_bsse,
-                    mp2_bsse: mp2_bsse, scs_mp2_bsse: scs_mp2_bsse,
-                    mp3_bsse: mp3_bsse, scs_mp3_bsse: scs_mp3_bsse
-                ]];
+            endif
+            dimers.repulsion = append [dimers.repulsion, repl];
+            dimers.electronic = append [dimers.electronic, ele];
+            dimers.electrostatic = append [dimers.electrostatic, es];
+            dimers.mp2 = append [dimers.mp2, mp2];
+            dimers.scs_mp2 = append [dimers.scs_mp2, scs_mp2];
+            dimers.mp3 = append [dimers.mp3, mp3];
+            dimers.scs_mp3 = append [dimers.scs_mp3, scs_mp3];
+            dimers.hf_bsse = append [dimers.hf_bsse, hf_bsse];
+            dimers.mp2_bsse = append [dimers.mp2_bsse, mp2_bsse];
+            dimers.scs_mp2_bsse = append [dimers.scs_mp2_bsse, scs_mp2_bsse];
+            dimers.mp3_bsse = append [dimers.mp3_bsse, mp3_bsse];
+            dimers.scs_mp3_bsse = append [dimers.scs_mp3_bsse, scs_mp3_bsse];
+
+            if version == '4.201' then
+                dimers.exchange_repulsion = append [dimers.exchange_repulsion, pieda_ex];
+                dimers.charge_transfer = append [dimers.charge_transfer, pieda_ct_mix];
+                dimers.amount_of_charge_transfer = append [dimers.amount_of_charge_transfer, pieda_amount_of_ct];
             endif
         endloop
     endloop
@@ -141,17 +136,9 @@ global function ParseAbinitMpCheckPointFile fnum
         num_atoms: num_atoms,
         num_frags: num_frags,
         atoms: atoms,
-        monomers: [
-            num_electrons: num_electrons_per_frags,
-            num_bonds: num_bonds_per_frags,
-            dipoles: dipoles,
-            energy: monomers
-        ],
+        monomers: monomers,
         bda_baas: bda_baas,
-        dimers: [
-            distances: distances,
-            energy: dimers
-        ],
+        dimers: dimers,
         basisset: basisset,
         electronic_state: electronic_state,
         method: method,
@@ -183,7 +170,7 @@ endfunction
 
 
 function IsStandardResidue res
-    if isflat res then
+    if isscalar res then
         return _IsStandardResidue res;
     else
         return app _IsStandardResidue res;
@@ -224,7 +211,7 @@ function OpenCPF cpf
     local pdb_file = WriteTempPDBFile cpf;
     local chains = ReadPDB pdb_file;
     fdelete pdb_file;
-    return chains;
+    return chains(1);
 endfunction
 
 
@@ -301,11 +288,11 @@ endfunction
 
 
 function _RGBToNumber [r, g, b]
-    return floor [r * 0xff * 0x10000] + floor [g * 0xff * 0x100] + floor [b * 0xff];
+    return floor [r * 0xff] * 0x10000 + floor [g * 0xff] * 0x100 + floor [b * 0xff];
 endfunction
 
 
-function RGBToNumber v
+global function RGBToNumber v
     if isflat v then
         return _RGBToNumber v;
     else
@@ -314,14 +301,139 @@ function RGBToNumber v
 endfunction
 
 
+function _DimerIndex [i, j]
+    if j > i then
+        [i, j] = [j, i];
+    endif
+
+    return ((i - 1) * (i - 2)) / 2 + j;
+endfunction
+
+
+function DimerIndex v
+    if isflat v then
+        return _DimerIndex v;
+    else
+        return app _DimerIndex v;
+    endif
+endfunction
+
+
+function DimerLengthToNumFragments [l]
+    return (sqrt [8 * l + 1] + 1) / 2;
+endfunction
+
+
+function _IfieWith [ifies, i]
+    local num_frags = DimerLengthToNumFragments length ifies;
+    local result = ifies [DimerIndex tr [i, igen num_frags]];
+
+    if i > 1 then
+        result(i - 1) = 0;
+    endif
+    result(i) = [];
+    if i < num_frags then
+        result(i + 1) = 0;
+    endif
+
+    return result;
+endfunction
+
+
+global function IfieWith [ifies, v]
+    if length v == 1 then
+        return _IfieWith [ifies, v];
+    else
+        local result = [];
+        local i;
+        for i in v loop
+            result = append [result, _IfieWith [ifies, i]];
+        endloop
+        return add result;
+    endif
+endfunction
+
+
+function _HSVColorScale [[huemin, huemax], v]
+    if v >= 0.5 then
+        return [huemax, 2 * (v - 0.5), 1];
+    else
+        return [huemin, -2 * (v - 0.5), 1];
+    endif
+endfunction
+
+
+function HSVColorScale [huemin, huemax, v]
+    if isscalar v then
+        return _HSVColorScale [[huemin, huemax], v];
+    else
+        return apt _HSVColorScale [[[huemin, huemax]], v];
+    endif
+endfunction
+
+
+global function LinearScale [range, v]
+    local xmax = range;
+    local xmin = -range;
+
+    local result = (v + range) / (2 * range);
+    result | (result > 1) = 1;
+    result | (result < 0) = 0;
+    return result;
+endfunction
+
+
+function SetColorsByIfie [ifie, cpf, chain, options]
+    local range = options.range, huemin = options.huemin, huemax = options.huemax, ligandcolor = options.ligandcolor;
+    if range === [] then
+        range = max [abs max cat ifie, abs min cat ifie];
+    endif
+    if huemin === [] then
+        huemin = 0;
+    endif
+    if huemax === [] then
+        huemax = 2/3;
+    endif
+    if ligandcolor === [] then
+        ligandcolor = 0xffff00;
+    endif
+
+    local ligandmask = not app isscalar ifie;
+    ifie | ligandmask = (ifie | not ligandmask)(1);
+
+    local colors = RGBToNumber HSVToRGB HSVColorScale [huemin, huemax, LinearScale [range, ifie]];
+
+    local atom_keys = (cAtoms chain)(1);
+    local res_keys = (cResidues chain)(1);
+
+    local i;
+    for i = 1, cpf.num_frags loop
+        local color = colors(i);
+        if ligandmask(i) then
+            color = ligandcolor;
+        endif
+
+        local frag_atoms = cpf.monomers.atom_indices(i);
+
+        aSetRGB [atom_keys[frag_atoms], color];
+        rSetRibbonRGB [res_keys(i), color];
+        rSetRGB [res_keys(i), color];
+    endloop
+
+    rSetRibbonColorBy [res_keys, 'r:rgb'];
+    aSetColorBy [atom_keys, 'a:rgb'];
+endfunction
+
+
 function main []
+    oDestroy Chains[];
     local cpf_file = fopenr 'Ubiquitine_MD_00004700_MP2-631Gd.cpf';
     local cpf = ParseAbinitMpCheckPointFile cpf_file;
-    local chains = OpenCPF cpf;
-    local residues = cResidues chains;
-    // rSetRibbonColorBy [residues, 'rgb'];
-    rSetRibbonRGB [residues, 0xff0000];
-    aSetRGB [cAtoms chains, 0x00ff00];
+    local chain = OpenCPF cpf;
 
-    rSetRibbonColorBy [residues, 'r:rgb'];
+    local ligand = 4;
+    SetColorsByIfie [IfieWith [cpf.dimers.electrostatic, ligand], cpf, chain];
+    // SetColorsByIfie [IfieWith [cpf.dimers.exchange_repulsion, ligand], cpf, chain];
+    // SetColorsByIfie [IfieWith [cpf.dimers.charge_transfer, ligand], cpf, chain];
+    // SetColorsByIfie [IfieWith [cpf.dimers.mp2, ligand], cpf, chain];
 endfunction
