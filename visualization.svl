@@ -183,7 +183,11 @@ endfunction
 
 
 function IsStandardResidue res
-    return app _IsStandardResidue res;
+    if isflat res then
+        return _IsStandardResidue res;
+    else
+        return app _IsStandardResidue res;
+    endif
 endfunction
 
 
@@ -249,8 +253,12 @@ function _RGBToHSV [r, g, b]
 endfunction
 
 
-global function RGBToHSV v
-    return app _RGBToHSV v;
+function RGBToHSV v
+    if isflat v then
+        return _RGBToHSV v;
+    else
+        return app _RGBToHSV v;
+    endif
 endfunction
 
 
@@ -283,8 +291,26 @@ function _HSVToRGB [h, s, v]
 endfunction
 
 
-global function HSVToRGB v
-    return app _HSVToRGB v;
+function HSVToRGB v
+    if isflat v then
+        return _HSVToRGB v;
+    else
+        return app _HSVToRGB v;
+    endif
+endfunction
+
+
+function _RGBToNumber [r, g, b]
+    return floor [r * 0xff * 0x10000] + floor [g * 0xff * 0x100] + floor [b * 0xff];
+endfunction
+
+
+function RGBToNumber v
+    if isflat v then
+        return _RGBToNumber v;
+    else
+        return app _RGBToNumber v;
+    endif
 endfunction
 
 
