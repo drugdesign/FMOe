@@ -207,11 +207,95 @@ global function AbinitMpCheckPointFileToPDBFile [cpf, fnum]
 endfunction
 
 
+function WriteTempPDBFile cpf
+    local pdb_path = fnametemp '$TMP/fmoe_visualization_*.pdb';
+    local pdb_file = fopenw pdb_path;
+    AbinitMpCheckPointFileToPDBFile [cpf, pdb_file];
+    fclose pdb_file;
+    return pdb_path;
+endfunction
+
+
+function OpenCPF cpf
+    local pdb_file = WriteTempPDBFile cpf;
+    local chains = ReadPDB pdb_file;
+    fdelete pdb_file;
+    return chains;
+endfunction
+
+
+function _RGBToHSV [r, g, b]
+    local vmax = max [r, g, b];
+    local vmin = min [r, g, b];
+    local h = vmax - vmin;
+
+    if vmax == r then
+        h = (g - b) / h;
+        if h < 0 then
+            h = 6 + h;
+        endif
+    elseif vmax == g then
+        h = 2 + (b - r) / h;
+    else
+        h = 4 + (r - g) / h;
+    endif
+    h = h / 6;
+    local s = vmax - vmin;
+    if vmax <> 0 then
+        s = s / vmax;
+    endif
+    local v = vmax;
+    return [h, s, v];
+endfunction
+
+
+global function RGBToHSV v
+    return app _RGBToHSV v;
+endfunction
+
+
+function _HSVToRGB [h, s, v]
+    local r = v, g = v, b = v;
+    h = 6 * h;
+    local i = floor h;
+    local f = h - i;
+    local fr = 1, fg = 1, fb = 1;
+    if     i == 0 then
+        fg = 1 - s * (1 - f);
+        fb = 1 - s;
+    elseif i == 1 then
+        fr = 1 - s * f;
+        fb = 1 - s;
+    elseif i == 2 then
+        fr = 1 - s;
+        fb = 1 - s * (1 - f);
+    elseif i == 3 then
+        fr = 1 - s;
+        fg = 1 - s * f;
+    elseif i == 4 then
+        fr = 1 - s * (1 - f);
+        fg = 1 - s;
+    elseif i == 5 then
+        fg = 1 - s;
+        fb = 1 - s * f;
+    endif
+    return [fr * r, fg * g, fb * b];
+endfunction
+
+
+global function HSVToRGB v
+    return app _HSVToRGB v;
+endfunction
+
+
 function main []
     local cpf_file = fopenr 'Ubiquitine_MD_00004700_MP2-631Gd.cpf';
-    local pdb_file = fopenw 'Ubiquitine_MD_00004700_MP2-631Gd.pdb';
     local cpf = ParseAbinitMpCheckPointFile cpf_file;
-    AbinitMpCheckPointFileToPDBFile [cpf, pdb_file];
-    fclose cpf_file;
-    fclose pdb_file;
+    local chains = OpenCPF cpf;
+    local residues = cResidues chains;
+    // rSetRibbonColorBy [residues, 'rgb'];
+    rSetRibbonRGB [residues, 0xff0000];
+    aSetRGB [cAtoms chains, 0x00ff00];
+
+    rSetRibbonColorBy [residues, 'r:rgb'];
 endfunction
