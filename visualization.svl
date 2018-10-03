@@ -215,60 +215,6 @@ function OpenCPF cpf
 endfunction
 
 
-function RGBToHSV [r, g, b]
-    local vmax = max [r, g, b];
-    local vmin = min [r, g, b];
-    local h = vmax - vmin;
-
-    if vmax == r then
-        h = (g - b) / h;
-        if h < 0 then
-            h = 6 + h;
-        endif
-    elseif vmax == g then
-        h = 2 + (b - r) / h;
-    else
-        h = 4 + (r - g) / h;
-    endif
-    h = h / 6;
-    local s = vmax - vmin;
-    if vmax <> 0 then
-        s = s / vmax;
-    endif
-    local v = vmax;
-    return [h, s, v];
-endfunction
-
-
-function HSVToRGB [h, s, v]
-    local r = v, g = v, b = v;
-    h = 6 * h;
-    local i = floor h;
-    local f = h - i;
-    local fr = 1, fg = 1, fb = 1;
-    if     i == 0 then
-        fg = 1 - s * (1 - f);
-        fb = 1 - s;
-    elseif i == 1 then
-        fr = 1 - s * f;
-        fb = 1 - s;
-    elseif i == 2 then
-        fr = 1 - s;
-        fb = 1 - s * (1 - f);
-    elseif i == 3 then
-        fr = 1 - s;
-        fg = 1 - s * f;
-    elseif i == 4 then
-        fr = 1 - s * (1 - f);
-        fg = 1 - s;
-    elseif i == 5 then
-        fg = 1 - s;
-        fb = 1 - s * f;
-    endif
-    return [fr * r, fg * g, fb * b];
-endfunction
-
-
 function RGBToNumber [r, g, b]
     return floor [r * 0xff] * 0x10000 + floor [g * 0xff] * 0x100 + floor [b * 0xff];
 endfunction
@@ -327,54 +273,28 @@ global function IfieWith [ifies, v]
 endfunction
 
 
-function _InterpolateHSV [h0, s0, v0, dh, ds, dv, r]
-    local h = h0 + dh * r;
-    if h < 0 then
-        h = h + 1;
-    endif
+function InterpolateRGB [rgb0, rgb1, r]
+    local [r0, g0, b0] = rgb0;
+    local [r1, g1, b1] = rgb1;
+    local dr = r1 - r0;
+    local dg = g1 - g0;
+    local db = b1 - b0;
 
-    return [h, s0 + ds * r, v0 + dv * r];
+    return tr [r0 + dr * r, g0 + dg * r, b0 + db * r];
 endfunction
 
 
-function InterpolateHSV [hsv0, hsv1, r]
-    local [h0, s0, v0] = hsv0;
-    local [h1, s1, v1] = hsv1;
-    local dh = h1 - h0;
-    local ds = s1 - s0;
-    local dv = v1 - v0;
-
-    if isnan h0 then
-        h0 = h1;
-        dh = 0;
-    endif
-
-    if dh > 0.5 then
-        dh = dh - 1;
-    endif
-    if dh > 0.5 then
-        dh = dh + 1;
-    endif
-
-    if isnan dh then
-        dh = 0;
-    endif
-
-    return apt _InterpolateHSV [h0, s0, v0, dh, ds, dv, r];
-endfunction
-
-
-function _HSVColorScale [[hsvmin, hsv0, hsvmax], v]
+function _RGBColorScale [[rgbmin, rgb0, rgbmax], v]
     if v > 0.5 then
-        return InterpolateHSV [hsv0, hsvmax, 2 * (v - 0.5)];
+        return InterpolateRGB [rgb0, rgbmax, 2 * (v - 0.5)];
     else
-        return InterpolateHSV [hsvmin, hsv0, 2 * v];
+        return InterpolateRGB [rgbmin, rgb0, 2 * v];
     endif
 endfunction
 
 
-function HSVColorScale [hsvmin, hsv0, hsvmax, v]
-    return app cat apt _HSVColorScale [[[hsvmin, hsv0, hsvmax]], v];
+function RGBColorScale [rgbmin, rgb0, rgbmax, v]
+    return app cat apt _RGBColorScale [[[rgbmin, rgb0, rgbmax]], v];
 endfunction
 
 
@@ -415,10 +335,10 @@ function SetColorsByIfie [ifie, cpf, chain, options]
     local ligandmask = not app isscalar ifie;
     ifie | ligandmask = (ifie | not ligandmask)(1);
 
-    local colors = app RGBToNumber app HSVToRGB HSVColorScale [
-        RGBToHSV NumberToRGB rgbmin,
-        RGBToHSV NumberToRGB rgb0,
-        RGBToHSV NumberToRGB rgbmax,
+    local colors = app RGBToNumber RGBColorScale [
+        NumberToRGB rgbmin,
+        NumberToRGB rgb0,
+        NumberToRGB rgbmax,
         LinearScale [range, ifie]];
 
     local atom_keys = (cAtoms chain)(1);
@@ -449,13 +369,13 @@ function main []
     local cpf = ParseAbinitMpCheckPointFile cpf_file;
     local chain = OpenCPF cpf;
 
-    local ligand = 14;
+    local ligand = 15;
     local options = [
-        range: 1,
+        range: 5,
         rgb0: 0xcccccc
     ];
-    // SetColorsByIfie [IfieWith [cpf.dimers.electrostatic * HARTREE, ligand], cpf, chain, options];
+    SetColorsByIfie [IfieWith [cpf.dimers.electrostatic * HARTREE, ligand], cpf, chain, options];
     // SetColorsByIfie [IfieWith [cpf.dimers.exchange_repulsion * HARTREE, ligand], cpf, chain, options];
     // SetColorsByIfie [IfieWith [cpf.dimers.charge_transfer, ligand], cpf, chain, options];
-    SetColorsByIfie [IfieWith [cpf.dimers.mp2 * HARTREE, ligand], cpf, chain, options];
+    // SetColorsByIfie [IfieWith [cpf.dimers.mp2 * HARTREE, ligand], cpf, chain, options];
 endfunction
