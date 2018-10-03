@@ -215,7 +215,7 @@ function OpenCPF cpf
 endfunction
 
 
-function _RGBToHSV [r, g, b]
+function RGBToHSV [r, g, b]
     local vmax = max [r, g, b];
     local vmin = min [r, g, b];
     local h = vmax - vmin;
@@ -240,16 +240,7 @@ function _RGBToHSV [r, g, b]
 endfunction
 
 
-function RGBToHSV v
-    if isflat v then
-        return _RGBToHSV v;
-    else
-        return app _RGBToHSV v;
-    endif
-endfunction
-
-
-function _HSVToRGB [h, s, v]
+function HSVToRGB [h, s, v]
     local r = v, g = v, b = v;
     h = 6 * h;
     local i = floor h;
@@ -278,44 +269,26 @@ function _HSVToRGB [h, s, v]
 endfunction
 
 
-function HSVToRGB v
-    if isflat v then
-        return _HSVToRGB v;
-    else
-        return app _HSVToRGB v;
-    endif
-endfunction
-
-
-function _RGBToNumber [r, g, b]
+function RGBToNumber [r, g, b]
     return floor [r * 0xff] * 0x10000 + floor [g * 0xff] * 0x100 + floor [b * 0xff];
 endfunction
 
 
-global function RGBToNumber v
-    if isflat v then
-        return _RGBToNumber v;
-    else
-        return app _RGBToNumber v;
-    endif
+function NumberToRGB n
+    return [
+        floor [n / 0x10000] / 0xff,
+        bitand [floor [n / 0x100], 0xff] / 0xff,
+        bitand [n, 0xff] / 0xff
+    ];
 endfunction
 
 
-function _DimerIndex [i, j]
+function DimerIndex [i, j]
     if j > i then
         [i, j] = [j, i];
     endif
 
     return ((i - 1) * (i - 2)) / 2 + j;
-endfunction
-
-
-function DimerIndex v
-    if isflat v then
-        return _DimerIndex v;
-    else
-        return app _DimerIndex v;
-    endif
 endfunction
 
 
@@ -326,7 +299,7 @@ endfunction
 
 function _IfieWith [ifies, i]
     local num_frags = DimerLengthToNumFragments length ifies;
-    local result = ifies [DimerIndex tr [i, igen num_frags]];
+    local result = ifies [app DimerIndex tr [i, igen num_frags]];
 
     if i > 1 then
         result(i - 1) = 0;
@@ -354,25 +327,58 @@ global function IfieWith [ifies, v]
 endfunction
 
 
-function _HSVColorScale [[huemin, huemax], v]
-    if v >= 0.5 then
-        return [huemax, 2 * (v - 0.5), 1];
+function _InterpolateHSV [h0, s0, v0, dh, ds, dv, r]
+    local h = h0 + dh * r;
+    if h < 0 then
+        h = h + 1;
+    endif
+
+    return [h, s0 + ds * r, v0 + dv * r];
+endfunction
+
+
+function InterpolateHSV [hsv0, hsv1, r]
+    local [h0, s0, v0] = hsv0;
+    local [h1, s1, v1] = hsv1;
+    local dh = h1 - h0;
+    local ds = s1 - s0;
+    local dv = v1 - v0;
+
+    if isnan h0 then
+        h0 = h1;
+        dh = 0;
+    endif
+
+    if dh > 0.5 then
+        dh = dh - 1;
+    endif
+    if dh > 0.5 then
+        dh = dh + 1;
+    endif
+
+    if isnan dh then
+        dh = 0;
+    endif
+
+    return apt _InterpolateHSV [h0, s0, v0, dh, ds, dv, r];
+endfunction
+
+
+function _HSVColorScale [[hsvmin, hsv0, hsvmax], v]
+    if v > 0.5 then
+        return InterpolateHSV [hsv0, hsvmax, 2 * (v - 0.5)];
     else
-        return [huemin, -2 * (v - 0.5), 1];
+        return InterpolateHSV [hsvmin, hsv0, 2 * v];
     endif
 endfunction
 
 
-function HSVColorScale [huemin, huemax, v]
-    if isscalar v then
-        return _HSVColorScale [[huemin, huemax], v];
-    else
-        return apt _HSVColorScale [[[huemin, huemax]], v];
-    endif
+function HSVColorScale [hsvmin, hsv0, hsvmax, v]
+    return app cat apt _HSVColorScale [[[hsvmin, hsv0, hsvmax]], v];
 endfunction
 
 
-global function LinearScale [range, v]
+function LinearScale [range, v]
     local xmax = range;
     local xmin = -range;
 
@@ -384,24 +390,36 @@ endfunction
 
 
 function SetColorsByIfie [ifie, cpf, chain, options]
-    local range = options.range, huemin = options.huemin, huemax = options.huemax, ligandcolor = options.ligandcolor;
+    local range = options.range,
+        rgbmin = options.rgbmin,
+        rgb0 = options.rgb0,
+        rgbmax = options.rgbmax,
+        ligandrgb = options.ligandrgb;
+
     if range === [] then
         range = max [abs max cat ifie, abs min cat ifie];
     endif
-    if huemin === [] then
-        huemin = 0;
+    if rgbmin === [] then
+        rgbmin = 0xff0000;
     endif
-    if huemax === [] then
-        huemax = 2/3;
+    if rgb0 === [] then
+        rgb0 = 0xffffff;
     endif
-    if ligandcolor === [] then
-        ligandcolor = 0xffff00;
+    if rgbmax === [] then
+        rgbmax = 0x0000ff;
+    endif
+    if ligandrgb === [] then
+        ligandrgb = 0xffff00;
     endif
 
     local ligandmask = not app isscalar ifie;
     ifie | ligandmask = (ifie | not ligandmask)(1);
 
-    local colors = RGBToNumber HSVToRGB HSVColorScale [huemin, huemax, LinearScale [range, ifie]];
+    local colors = app RGBToNumber app HSVToRGB HSVColorScale [
+        RGBToHSV NumberToRGB rgbmin,
+        RGBToHSV NumberToRGB rgb0,
+        RGBToHSV NumberToRGB rgbmax,
+        LinearScale [range, ifie]];
 
     local atom_keys = (cAtoms chain)(1);
     local res_keys = (cResidues chain)(1);
@@ -410,7 +428,7 @@ function SetColorsByIfie [ifie, cpf, chain, options]
     for i = 1, cpf.num_frags loop
         local color = colors(i);
         if ligandmask(i) then
-            color = ligandcolor;
+            color = ligandrgb;
         endif
 
         local frag_atoms = cpf.monomers.atom_indices(i);
@@ -420,7 +438,7 @@ function SetColorsByIfie [ifie, cpf, chain, options]
         rSetRGB [res_keys(i), color];
     endloop
 
-    rSetRibbonColorBy [res_keys, 'r:rgb'];
+    rSetRibbonColorBy [res_keys, 'rgb'];
     aSetColorBy [atom_keys, 'a:rgb'];
 endfunction
 
@@ -431,9 +449,13 @@ function main []
     local cpf = ParseAbinitMpCheckPointFile cpf_file;
     local chain = OpenCPF cpf;
 
-    local ligand = 4;
-    SetColorsByIfie [IfieWith [cpf.dimers.electrostatic, ligand], cpf, chain];
-    // SetColorsByIfie [IfieWith [cpf.dimers.exchange_repulsion, ligand], cpf, chain];
-    // SetColorsByIfie [IfieWith [cpf.dimers.charge_transfer, ligand], cpf, chain];
-    // SetColorsByIfie [IfieWith [cpf.dimers.mp2, ligand], cpf, chain];
+    local ligand = 14;
+    local options = [
+        range: 1,
+        rgb0: 0xcccccc
+    ];
+    // SetColorsByIfie [IfieWith [cpf.dimers.electrostatic * HARTREE, ligand], cpf, chain, options];
+    // SetColorsByIfie [IfieWith [cpf.dimers.exchange_repulsion * HARTREE, ligand], cpf, chain, options];
+    // SetColorsByIfie [IfieWith [cpf.dimers.charge_transfer, ligand], cpf, chain, options];
+    SetColorsByIfie [IfieWith [cpf.dimers.mp2 * HARTREE, ligand], cpf, chain, options];
 endfunction
