@@ -314,6 +314,7 @@ function SetColorsByIfie [ifie, cpf, chain, options]
         rgbmin = options.rgbmin,
         rgb0 = options.rgb0,
         rgbmax = options.rgbmax,
+        colorelement = options.colorelement,
         ligandrgb = options.ligandrgb;
 
     if range === [] then
@@ -344,22 +345,30 @@ function SetColorsByIfie [ifie, cpf, chain, options]
     local atom_keys = (cAtoms chain)(1);
     local res_keys = (cResidues chain)(1);
 
-    local i;
+    local i, target_atoms;
     for i = 1, cpf.num_frags loop
         local color = colors(i);
         if ligandmask(i) then
             color = ligandrgb;
         endif
 
-        local frag_atoms = cpf.monomers.atom_indices(i);
+        local frag_atoms = atom_keys[cpf.monomers.atom_indices(i)];
+        if not [colorelement === []] then
+            target_atoms = append [target_atoms, frag_atoms | app orE apt eqE [aElement frag_atoms, [colorelement]]];
+        endif
 
-        aSetRGB [atom_keys[frag_atoms], color];
+        aSetRGB [frag_atoms, color];
         rSetRibbonRGB [res_keys(i), color];
         rSetRGB [res_keys(i), color];
     endloop
 
     rSetRibbonColorBy [res_keys, 'rgb'];
-    aSetColorBy [atom_keys, 'a:rgb'];
+
+    if colorelement === [] then
+        aSetColorBy [atom_keys, 'a:rgb'];
+    else
+        aSetColorBy [target_atoms, 'a:rgb'];
+    endif
 endfunction
 
 
@@ -372,7 +381,8 @@ function main []
     local ligand = 15;
     local options = [
         range: 5,
-        rgb0: 0xcccccc
+        rgb0: 0x666666,
+        colorelement: ['C', 'H']
     ];
     SetColorsByIfie [IfieWith [cpf.dimers.electrostatic * HARTREE, ligand], cpf, chain, options];
     // SetColorsByIfie [IfieWith [cpf.dimers.exchange_repulsion * HARTREE, ligand], cpf, chain, options];
