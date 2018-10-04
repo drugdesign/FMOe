@@ -309,12 +309,11 @@ function LinearScale [range, v]
 endfunction
 
 
-function SetColorsByIfie [ifie, cpf, chain, options]
+global function SetRGBByIfie [ifie, cpf, chain, options]
     local range = options.range,
         rgbmin = options.rgbmin,
         rgb0 = options.rgb0,
         rgbmax = options.rgbmax,
-        colorelement = options.colorelement,
         ligandrgb = options.ligandrgb;
 
     if range === [] then
@@ -333,19 +332,20 @@ function SetColorsByIfie [ifie, cpf, chain, options]
         ligandrgb = 0xffff00;
     endif
 
+    rgbmin = NumberToRGB rgbmin;
+    rgb0 = NumberToRGB rgb0;
+    rgbmax = NumberToRGB rgbmax;
+
     local ligandmask = not app isscalar ifie;
     ifie | ligandmask = (ifie | not ligandmask)(1);
 
-    local colors = app RGBToNumber RGBColorScale [
-        NumberToRGB rgbmin,
-        NumberToRGB rgb0,
-        NumberToRGB rgbmax,
-        LinearScale [range, ifie]];
+    local scale = LinearScale [range, ifie];
+    local colors = app RGBToNumber RGBColorScale [rgbmin, rgb0, rgbmax, scale];
 
     local atom_keys = (cAtoms chain)(1);
     local res_keys = (cResidues chain)(1);
 
-    local i, target_atoms;
+    local i;
     for i = 1, cpf.num_frags loop
         local color = colors(i);
         if ligandmask(i) then
@@ -353,22 +353,12 @@ function SetColorsByIfie [ifie, cpf, chain, options]
         endif
 
         local frag_atoms = atom_keys[cpf.monomers.atom_indices(i)];
-        if not [colorelement === []] then
-            target_atoms = append [target_atoms, frag_atoms | app orE apt eqE [aElement frag_atoms, [colorelement]]];
-        endif
 
         aSetRGB [frag_atoms, color];
         rSetRibbonRGB [res_keys(i), color];
+        color | color == 0 = 0x010101;  // FIXME: avoid bug
         rSetRGB [res_keys(i), color];
     endloop
-
-    rSetRibbonColorBy [res_keys, 'rgb'];
-
-    if colorelement === [] then
-        aSetColorBy [atom_keys, 'a:rgb'];
-    else
-        aSetColorBy [target_atoms, 'a:rgb'];
-    endif
 endfunction
 
 
@@ -381,11 +371,15 @@ function main []
     local ligand = 15;
     local options = [
         range: 5,
-        rgb0: 0x666666,
-        colorelement: ['C', 'H']
+        rgb0: 0x00cc00,
+        colorelement: "CH"
     ];
-    SetColorsByIfie [IfieWith [cpf.dimers.electrostatic * HARTREE, ligand], cpf, chain, options];
+
+    SetRGBByIfie [IfieWith [cpf.dimers.electrostatic * HARTREE, ligand], cpf, chain, options];
     // SetColorsByIfie [IfieWith [cpf.dimers.exchange_repulsion * HARTREE, ligand], cpf, chain, options];
     // SetColorsByIfie [IfieWith [cpf.dimers.charge_transfer, ligand], cpf, chain, options];
     // SetColorsByIfie [IfieWith [cpf.dimers.mp2 * HARTREE, ligand], cpf, chain, options];
+
+    rSetRibbonColorBy [cResidues chain, 'rgb'];
+    aSetColorBy [cat cAtoms chain | app orE apt eqE [[totok "CH"], aElement cat cAtoms chain], 'a:rgb'];
 endfunction
