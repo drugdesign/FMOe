@@ -1,4 +1,8 @@
+#set title 'FMO Visualization'
+#set main 'FMOVisualization'
+
 const HARTREE = 627.509474;
+const RESOLUTION = 1000;
 
 
 function QuotRem [n, d]
@@ -28,6 +32,7 @@ endfunction
 global function ParseAbinitMpCheckPointFile fnum
     local [version, comment] = (fread [fnum, 'CPF Ver.{t:}{t:}\n'])(1);
     local [num_atoms, num_frags] = (fread [fnum, '{n:5}{n:5}\n'])(1);
+    local num_dimers = num_frags * (num_frags - 1) / 2;
 
     local atoms = [], frag_atoms = [];
     local i;
@@ -36,12 +41,12 @@ global function ParseAbinitMpCheckPointFile fnum
             uid, element, atom_type, res_name, res_index, frag_index,
             [x, y, z, hf_mul, mp2_mul, hf_nbo, mp2_nbo, hf_esp, mp2_esp]
         ] = (fread [fnum, '{n:5} {t:2} {c:*4} {t:3} {n:4} {n:4} {n:12*9}\n'])(1);
-        atoms = append [atoms, [
+        atoms(i) = [
             uid: uid, element: element, atom_type: token atom_type, res_name: res_name,
             res_index: res_index, frag_index: frag_index, x: x, y: y, z: z,
             hf_mul: hf_mul, mp2_mul: mp2_mul, hf_nbo: hf_nbo, mp2_nbo: mp2_nbo,
             hf_esp: hf_esp, mp2_esp: mp2_esp
-        ]];
+        ];
         frag_atoms(frag_index) = append[frag_atoms(frag_index), i];
     endloop
 
@@ -58,10 +63,11 @@ global function ParseAbinitMpCheckPointFile fnum
         bda_baas = append [bda_baas, [bda: bda, baa: baa]];
     endloop
 
-    local j, dimers = [];
+    local idx = 0, j, d_distances = igen num_dimers;
     for i = 2, num_frags loop
         for j = 1, i - 1 loop
-            dimers.distances = append [dimers.distances, (fread [fnum, '{n:*3}\n'])(1)(1)(3)];
+            idx = idx + 1;
+            d_distances(idx) = (fread [fnum, '{n:*3}\n'])(1)(1)(3);
         endloop
     endloop
 
@@ -91,8 +97,28 @@ global function ParseAbinitMpCheckPointFile fnum
 
     local repl, ele, es, mp2, scs_mp2, mp3, scs_mp3, hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse;
     local pieda_ex, pieda_ct_mix, pieda_amount_of_ct;
+    local
+        d_repulsion = igen num_dimers,
+        d_electronic = igen num_dimers,
+        d_electrostatic = igen num_dimers,
+        d_mp2 = igen num_dimers,
+        d_scs_mp2 = igen num_dimers,
+        d_mp3 = igen num_dimers,
+        d_scs_mp3 = igen num_dimers,
+        d_hf_bsse = igen num_dimers,
+        d_mp2_bsse = igen num_dimers,
+        d_scs_mp2_bsse = igen num_dimers,
+        d_mp3_bsse = igen num_dimers,
+        d_scs_mp3_bsse = igen num_dimers,
+        d_ex = igen num_dimers,
+        d_ct = igen num_dimers,
+        d_qij = igen num_dimers;
+
+    local start = cpuclock[];
+    idx = 0;
     for i = 2, num_frags loop
         for j = 1, i - 1 loop
+            idx = idx + 1;
             if version == '4.201' then
                 [
                     repl, ele, es,
@@ -109,23 +135,24 @@ global function ParseAbinitMpCheckPointFile fnum
                     hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse
                 ] = (fread [fnum, '{n:24*12}\n'])(1)(1);
             endif
-            dimers.repulsion = append [dimers.repulsion, repl];
-            dimers.electronic = append [dimers.electronic, ele];
-            dimers.electrostatic = append [dimers.electrostatic, es];
-            dimers.mp2 = append [dimers.mp2, mp2];
-            dimers.scs_mp2 = append [dimers.scs_mp2, scs_mp2];
-            dimers.mp3 = append [dimers.mp3, mp3];
-            dimers.scs_mp3 = append [dimers.scs_mp3, scs_mp3];
-            dimers.hf_bsse = append [dimers.hf_bsse, hf_bsse];
-            dimers.mp2_bsse = append [dimers.mp2_bsse, mp2_bsse];
-            dimers.scs_mp2_bsse = append [dimers.scs_mp2_bsse, scs_mp2_bsse];
-            dimers.mp3_bsse = append [dimers.mp3_bsse, mp3_bsse];
-            dimers.scs_mp3_bsse = append [dimers.scs_mp3_bsse, scs_mp3_bsse];
+
+            d_repulsion(idx) = repl;
+            d_electronic(idx) = ele;
+            d_electrostatic(idx) = es;
+            d_mp2(idx) = mp2;
+            d_scs_mp2(idx) = scs_mp2;
+            d_mp3(idx) = mp3;
+            d_scs_mp3(idx) = scs_mp3;
+            d_hf_bsse(idx) = hf_bsse;
+            d_mp2_bsse(idx) = mp2_bsse;
+            d_scs_mp2_bsse(idx) = scs_mp2_bsse;
+            d_mp3_bsse(idx) = mp3_bsse;
+            d_scs_mp3_bsse(idx) = scs_mp3_bsse;
 
             if version == '4.201' then
-                dimers.exchange_repulsion = append [dimers.exchange_repulsion, pieda_ex];
-                dimers.charge_transfer = append [dimers.charge_transfer, pieda_ct_mix];
-                dimers.amount_of_charge_transfer = append [dimers.amount_of_charge_transfer, pieda_amount_of_ct];
+                d_ex(idx) = pieda_ex;
+                d_ct(idx) = pieda_ct_mix;
+                d_qij(idx) = pieda_amount_of_ct;
             endif
         endloop
     endloop
@@ -138,7 +165,25 @@ global function ParseAbinitMpCheckPointFile fnum
         atoms: atoms,
         monomers: monomers,
         bda_baas: bda_baas,
-        dimers: dimers,
+        dimers: [
+            distances: d_distances,
+
+            repulsion: d_repulsion,
+            electronic: d_electronic,
+            electrostatic: d_electrostatic,
+            mp2: d_mp2,
+            scs_mp2: d_scs_mp2,
+            mp3: d_mp3,
+            scs_mp3: d_scs_mp3,
+            hf_bsse: d_hf_bsse,
+            mp2_bsse: d_mp2_bsse,
+            scs_mp2_bsse: d_scs_mp2_bsse,
+            mp3_bsse: d_mp3_bsse,
+            scs_mp3_bsse: d_scs_mp3_bsse,
+            exchange_repulsion: d_ex,
+            charge_transfer: d_ct,
+            amount_of_charge_transfer: d_qij
+        ],
         basisset: basisset,
         electronic_state: electronic_state,
         method: method,
@@ -211,7 +256,7 @@ function OpenCPF cpf
     local pdb_file = WriteTempPDBFile cpf;
     local chains = ReadPDB pdb_file;
     fdelete pdb_file;
-    return chains(1);
+    return chains;
 endfunction
 
 
@@ -247,13 +292,7 @@ function _IfieWith [ifies, i]
     local num_frags = DimerLengthToNumFragments length ifies;
     local result = ifies [app DimerIndex tr [i, igen num_frags]];
 
-    if i > 1 then
-        result(i - 1) = 0;
-    endif
     result(i) = [];
-    if i < num_frags then
-        result(i + 1) = 0;
-    endif
 
     return result;
 endfunction
@@ -309,7 +348,12 @@ function LinearScale [range, v]
 endfunction
 
 
-global function SetRGBByIfie [ifie, cpf, chain, options]
+function GetRange ifie
+    return max [abs max cat ifie, abs min cat ifie];
+endfunction
+
+
+global function SetRGBByIfie [ifie, cpf, chains, options]
     local range = options.range,
         rgbmin = options.rgbmin,
         rgb0 = options.rgb0,
@@ -317,16 +361,16 @@ global function SetRGBByIfie [ifie, cpf, chain, options]
         ligandrgb = options.ligandrgb;
 
     if range === [] then
-        range = max [abs max cat ifie, abs min cat ifie];
+        range = GetRange ifie;
     endif
     if rgbmin === [] then
-        rgbmin = 0xff0000;
+        rgbmin = 0x0000ff;
     endif
     if rgb0 === [] then
         rgb0 = 0xffffff;
     endif
     if rgbmax === [] then
-        rgbmax = 0x0000ff;
+        rgbmax = 0xff0000;
     endif
     if ligandrgb === [] then
         ligandrgb = 0xffff00;
@@ -342,8 +386,8 @@ global function SetRGBByIfie [ifie, cpf, chain, options]
     local scale = LinearScale [range, ifie];
     local colors = app RGBToNumber RGBColorScale [rgbmin, rgb0, rgbmax, scale];
 
-    local atom_keys = (cAtoms chain)(1);
-    local res_keys = (cResidues chain)(1);
+    local atom_keys = cat cAtoms chains;
+    local res_keys = cat cResidues chains;
 
     local i;
     for i = 1, cpf.num_frags loop
@@ -356,30 +400,230 @@ global function SetRGBByIfie [ifie, cpf, chain, options]
 
         aSetRGB [frag_atoms, color];
         rSetRibbonRGB [res_keys(i), color];
-        color | color == 0 = 0x010101;  // FIXME: avoid bug
+        // color | color == 0 = 0x010101;  // FIXME: avoid bug
         rSetRGB [res_keys(i), color];
     endloop
 endfunction
 
 
-function main []
-    oDestroy Chains[];
-    local cpf_file = fopenr 'Ubiquitine_MD_00004700_MP2-631Gd.cpf';
+const MAIN_PANEL = [
+    title: 'FMO Visualization',
+    windowName: 'FMOVisualization',
+    Vbox: [
+        extendH: 1,
+        Hbox: [
+            extendH: 1,
+            Label: [text: 'Ligand:', font: 'mediumBold'],
+            Button: [name: 'set_ligand', onTrigger: 'return'],
+            Button: [name: 'add_ligand', onTrigger: 'return', text: '+'],
+            Color: [name: 'ligandrgb', onTrigger: 'return']
+        ],
+        Hbox: [
+            extendH: 1,
+            Label: [text: 'Energy:', font: 'mediumBold'],
+            Radio: [name: 'visualize_energy', type: 'char', text: ['MP2', 'HF', 'ES', 'EX', 'CT+mix', 'DI'], onTrigger: 'return']
+        ],
+        Separator: [
+            extendH: 1
+        ],
+        Hbox: [
+            extendH: 1,
+            Vbox: [Color: [name: 'rgbmin', centerH: 1, onTrigger: 'return'], Text: [type: 'real', name: 'energymin', len: 10, onTrigger: 'return']],
+            Vbox: [
+                extendH: 1,
+                Slider: [extendH: 1, centerV: 1, name: 'leftslider', range: [-RESOLUTION, -1, 1], onTrigger: 'return'],
+                Wheel: [extendH: 1, centerV: 1, name: 'leftwheel', resetButton: 0, onTrigger: 'return']
+            ],
+            Vbox: [Color: [name: 'rgb0', centerH: 1, onTrigger: 'return'], Button: [text: '0', name: 'reset_energy', centerH: 1, extendH: 1, onTrigger: 'return']],
+            Vbox: [
+                extendH: 1,
+                Slider: [extendH: 1, centerV: 1, name: 'rightslider', range: [1, RESOLUTION, 1], onTrigger: 'return'],
+                Wheel: [extendH: 1, centerV: 1, name: 'rightwheel', resetButton: 0, onTrigger: 'return']
+            ],
+            Vbox: [Color: [name: 'rgbmax', centerH: 1, onTrigger: 'return'], Text: [type: 'real', name: 'energymax', len: 10, onTrigger: 'return']]
+        ]
+    ]
+];
+
+
+const LIGAND_PICKER = [
+    name: 'atom',
+    location: 'MOE',
+    mode: 'pickAtom',
+    title: 'pick one of ligand atoms...'
+];
+
+
+const FSB_PANEL = [
+    title : 'Open CPF File',
+    FSB : [
+        name : 'fsb',
+        mode : 'open'
+    ]
+];
+
+
+function GetIfie [cpf, key]
+    local e;
+    if key == 'MP2' then
+        e = cpf.dimers.electrostatic + cpf.dimers.exchange_repulsion + cpf.dimers.charge_transfer + cpf.dimers.mp2;
+    elseif key == 'HF' then
+        e = cpf.dimers.electrostatic + cpf.dimers.exchange_repulsion + cpf.dimers.charge_transfer;
+    elseif key == 'ES' then
+        e = cpf.dimers.electrostatic;
+    elseif key == 'EX' then
+        e = cpf.dimers.exchange_repulsion;
+    elseif key == 'CT+mix' then
+        e = cpf.dimers.charge_transfer;
+    elseif key == 'DI' then
+        e = cpf.dimers.mp2;
+    endif
+    e | abs e > 10 = 0;
+    return e * HARTREE;
+endfunction
+
+
+global function GetCpfAtomByAtomKey [cpf, chains, atom_key]
+    local idx = indexof [atom_key, cat cAtoms chains];
+    return cpf.atoms(idx);
+endfunction
+
+
+function PickLigandTask []
+    local wkey = WindowCreate LIGAND_PICKER;
+    local result = (first WindowWait wkey).atom;
+    WindowDestroy wkey;
+    return result;
+endfunction
+
+
+function PickLigand [cpf, chains]
+    local [atom_key, return_code] = task_call [#PickLigandTask, [], [master: 'parent']];
+    if return_code == '' then
+        return GetCpfAtomByAtomKey[cpf, chains, atom_key];
+    else
+        return [];
+    endif
+endfunction
+
+
+function DetectLigand [cpf]
+    local atom;
+    for atom in cpf.atoms loop
+        if not orE eqE [atom.res_name, STANDARD_RESIDUES] then
+            return atom;
+        endif
+    endloop
+    return [];
+endfunction
+
+
+function ShowVisualizationPanel [cpf, chains, options]
+    local wkey = WindowCreate MAIN_PANEL;
+
+    local ifie_cat = 'MP2';
+    local rgbmin = 0x0000ff;
+    local rgb0 = 0xffffff;
+    local rgbmax = 0xff0000;
+    local detected_ligand = DetectLigand [cpf];
+    local ligands;
+    local ligand_names;
+    if detected_ligand === [] then
+        ligands = [cpf.atoms(1).frag_index];
+        ligand_names = [swrite ['{} {}', cpf.atoms(1).res_name, cpf.atoms(1).res_index]];
+    else
+        print detected_ligand;
+        ligands = [detected_ligand.frag_index];
+        ligand_names = [swrite ['{} {}', detected_ligand.res_name, detected_ligand.res_index]];
+    endif
+
+    local new_ligand;
+    local ligandrgb = 0xffff00;
+
+    local ifie = IfieWith [GetIfie [cpf, ifie_cat], ligands];
+    local range = GetRange ifie;
+    local value = range;
+
+    WindowShow wkey;
+    loop
+        SetRGBByIfie [ifie, cpf, chains, [range: value, rgbmin: rgbmin, rgb0: rgb0, rgbmax: rgbmax, ligandrgb: ligandrgb]];
+        WindowSetData [wkey, [
+            visualize_energy: ifie_cat,
+            energymin: -value, energymax: value,
+            leftslider: -value / range * RESOLUTION,
+            rightslider: value / range * RESOLUTION,
+            ligandrgb: ligandrgb, rgbmin: rgbmin, rgb0: rgb0, rgbmax: rgbmax
+            ]
+        ];
+        WindowSetAttr [wkey, [set_ligand: [text: token cat droplast cat tr [ligand_names, ","]]]];
+        local [values, trigger] = WindowWait wkey;
+        pr trigger;
+        if trigger == 'leftslider' then
+            value = range * (-values.leftslider) / RESOLUTION;
+        elseif trigger == 'rightslider' then
+            value = range * values.rightslider / RESOLUTION;
+        elseif trigger == 'leftwheel' then
+            value = value - values.leftwheel;
+        elseif trigger == 'rightwheel' then
+            value = value + values.rightwheel;
+        elseif trigger == 'energymin' then
+            value = -values.energymin;
+        elseif trigger == 'energymax' then
+            value = values.energymax;
+        elseif trigger == 'reset_energy' then
+            value = range;
+        elseif trigger == 'rgbmin' then
+            rgbmin = values.rgbmin;
+        elseif trigger == 'rgb0' then
+            rgb0 = values.rgb0;
+        elseif trigger == 'rgbmax' then
+            rgb0 = values.rgbmax;
+        elseif trigger == 'ligandrgb' then
+            ligandrgb = values.ligandrgb;
+        elseif trigger == 'visualize_energy' then
+            ifie_cat = values.visualize_energy;
+            ifie = IfieWith [GetIfie [cpf, ifie_cat], ligands];
+            range = GetRange ifie * 2;
+        elseif trigger == 'set_ligand' then
+            new_ligand = PickLigand[cpf, chains];
+            if not [new_ligand === []] then
+                ligands = [new_ligand.frag_index];
+                ligand_names = [swrite ['{} {}', new_ligand.res_name, new_ligand.res_index]];
+            endif
+        elseif trigger == 'add_ligand' then
+            new_ligand = PickLigand[cpf, chains];
+            if not orE eqE [ligands, new_ligand.frag_index] then
+                ligands = append [ligands, new_ligand.frag_index];
+                ligand_names = append [ligand_names, swrite ['{} {}', new_ligand.res_name, new_ligand.res_index]];
+            endif
+        endif
+
+        if orE[trigger == 'set_ligand', trigger == 'add_ligand'] then
+            ifie = IfieWith [GetIfie [cpf, ifie_cat], ligands];
+            range = GetRange ifie;
+            value = range;
+        endif
+
+        if value < 0 then
+            value = 0.01;
+        endif
+        WindowSetData [wkey, [leftwheel: 0, rightwheel: 0]];
+    endloop
+    WindowDestroy wkey;
+endfunction
+
+
+global function FMOVisualization []
+    local path = (WindowPrompt [FSB_PANEL, [fsb: '*.cpf']]).fsb;
+    if path === [] then
+        return;
+    endif
+    local cpf_file = fopenr path;
     local cpf = ParseAbinitMpCheckPointFile cpf_file;
-    local chain = OpenCPF cpf;
+    fclose cpf_file;
 
-    local ligand = 15;
-    local options = [
-        range: 5,
-        rgb0: 0x00cc00,
-        colorelement: "CH"
-    ];
-
-    SetRGBByIfie [IfieWith [cpf.dimers.electrostatic * HARTREE, ligand], cpf, chain, options];
-    // SetColorsByIfie [IfieWith [cpf.dimers.exchange_repulsion * HARTREE, ligand], cpf, chain, options];
-    // SetColorsByIfie [IfieWith [cpf.dimers.charge_transfer, ligand], cpf, chain, options];
-    // SetColorsByIfie [IfieWith [cpf.dimers.mp2 * HARTREE, ligand], cpf, chain, options];
-
-    rSetRibbonColorBy [cResidues chain, 'rgb'];
-    aSetColorBy [cat cAtoms chain | app orE apt eqE [[totok "CH"], aElement cat cAtoms chain], 'a:rgb'];
+    local chains = OpenCPF cpf;
+    rSetRibbonColorBy [cResidues chains, 'rgb'];
+    aSetColorBy [cat cAtoms chains | app orE apt eqE [[totok "CH"], aElement cat cAtoms chains], 'a:rgb'];
+    ShowVisualizationPanel [cpf, chains, []];
 endfunction

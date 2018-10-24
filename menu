@@ -1,4 +1,5 @@
 MENU APPEND "RightButtonBar"
     SEPARATOR
-    "FMO Tool" exec "FMOInterface[]"
+    "FMO Input" exec "FMOInterface[]"
+    "FMO View" exec "FMOVisualization[]"
 ENDMENU
