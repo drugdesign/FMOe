@@ -215,11 +215,7 @@ endfunction
 
 
 function IsStandardResidue res
-    if isscalar res then
-        return _IsStandardResidue res;
-    else
-        return app _IsStandardResidue res;
-    endif
+    return app _IsStandardResidue res;
 endfunction
 
 
@@ -455,10 +451,10 @@ const LIGAND_PICKER = [
 
 
 const FSB_PANEL = [
-    title : 'Open CPF File',
-    FSB : [
-        name : 'fsb',
-        mode : 'open'
+    title: 'Open CPF File',
+    FSB: [
+        name: 'fsb',
+        mode: 'open'
     ]
 ];
 
@@ -532,7 +528,6 @@ function ShowVisualizationPanel [cpf, chains, options]
         ligands = [cpf.atoms(1).frag_index];
         ligand_names = [swrite ['{} {}', cpf.atoms(1).res_name, cpf.atoms(1).res_index]];
     else
-        print detected_ligand;
         ligands = [detected_ligand.frag_index];
         ligand_names = [swrite ['{} {}', detected_ligand.res_name, detected_ligand.res_index]];
     endif
@@ -557,7 +552,6 @@ function ShowVisualizationPanel [cpf, chains, options]
         ];
         WindowSetAttr [wkey, [set_ligand: [text: token cat droplast cat tr [ligand_names, ","]]]];
         local [values, trigger] = WindowWait wkey;
-        pr trigger;
         if trigger == 'leftslider' then
             value = range * (-values.leftslider) / RESOLUTION;
         elseif trigger == 'rightslider' then

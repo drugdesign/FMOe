@@ -1,9 +1,9 @@
-FMOE
-==
+# FMOE
+
 ![fmotool](./img/fmotool.gif)
 
-installation
---
+## installation
+
 1. clone repository to ~/moefiles
 
     ```
@@ -16,7 +16,8 @@ installation
 
     ```
     local function main []
-        load '$HOME/moefiles/FMOE/main.svl';
+        load '$HOME/moefiles/FMOE/fragmentation.svl';
+        load '$HOME/moefiles/FMOE/visualization.svl';
         ReadMenuFile '$HOME/moefiles/FMOE/menu';  // add menu item (optional)
     endfunction
     ```
