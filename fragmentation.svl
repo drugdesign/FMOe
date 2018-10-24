@@ -31,7 +31,7 @@ local function mCTerminalC atoms
   return oxygens >= 2 and nitrogens == 0;
 endfunction
 
-global function FMOSplitProtein chains
+global function FMOFragmentProtein chains
   chains = chains | app andE (rType cResidues chains == 'amino');
   local atoms = rAtoms (cat cResidues chains);
   local CAs = apt mget [atoms, aName atoms == 'CA'];
@@ -552,7 +552,7 @@ global function FMOWriteFiles [base, templatePath, atoms, splits, useXYZ]
 endfunction
 
 
-global function FMOInterface []
+global function FMOFragmentation []
   local lock = dvar_open 'FMOTool';
   dvar_lock lock;
 
@@ -663,7 +663,7 @@ global function FMOInterface []
     *detachedBonds = db | igen length db <> index;
   endfunction
 
-  AddToList [apt CreateBond [FMOSplitProtein Chains[], 'auto', 0xffffff], detachedBonds];
+  AddToList [apt CreateBond [FMOFragmentProtein Chains[], 'auto', 0xffffff], detachedBonds];
   UpdateLists[];
   loop
     local [vals, trigger] = WindowWait wkey;
@@ -674,7 +674,7 @@ global function FMOInterface []
       RemoveByType [detachedBonds, 'protein'];
       GClearVertexData *focusedDish;
 
-      AddToList [apt CreateBond [FMOSplitProtein Chains[], 'auto', 0xffffff], detachedBonds];
+      AddToList [apt CreateBond [FMOFragmentProtein Chains[], 'auto', 0xffffff], detachedBonds];
       UpdateLists[];
 
     elseif trigger === 'DetachedBondList' then
