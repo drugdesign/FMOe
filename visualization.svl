@@ -29,7 +29,73 @@ function ParseFragAttributes [fnum, num_frags]
 endfunction
 
 
-global function ParseAbinitMpCheckPointFile fnum
+const CPF_ATOM_UID = 1;
+const CPF_ATOM_ELEMENT = 2;
+const CPF_ATOM_ATOMTYPE = 3;
+const CPF_ATOM_RESNAME = 4;
+const CPF_ATOM_RESINDEX = 5;
+const CPF_ATOM_FRAGINDEX = 6;
+const CPF_ATOM_X = 7;
+const CPF_ATOM_Y = 8;
+const CPF_ATOM_Z = 9;
+const CPF_ATOM_HFMUL = 10;
+const CPF_ATOM_MP2MUL = 11;
+const CPF_ATOM_HFNBO = 12;
+const CPF_ATOM_MP2NBO = 13;
+const CPF_ATOM_HFESP = 14;
+const CPF_ATOM_MP2ESP = 15;
+
+const CPF_VERSION = 1;
+const CPF_COMMENT = 2;
+const CPF_NUM_ATOMS = 3;
+const CPF_NUM_FRAGMENTS = 4;
+const CPF_ATOMS = 5;
+
+const CPF_MONOMER_ATOM_INDICES = 6;
+const CPF_MONOMER_NUM_ELECTRONS = 7;
+const CPF_MONOMER_NUM_BONDS = 8;
+const CPF_MONOMER_HF_DIPOLES = 9;
+const CPF_MONOMER_MP2_DIPOLES = 10;
+const CPF_MONOMER_REPULSION = 11;
+const CPF_MONOMER_ELECTRONIC = 12;
+const CPF_MONOMER_MP2 = 13;
+const CPF_MONOMER_MP3 = 14;
+const CPF_MONOMER_AO = 15;
+const CPF_MONOMER_MO = 16;
+
+const CPF_BDA_BAAS = 17;
+
+const CPF_DIMER_DISTANCES = 18;
+const CPF_DIMER_REPULSION = 19;
+const CPF_DIMER_ELECTRONIC = 20;
+const CPF_DIMER_ELECTROSTATIC = 21;
+const CPF_DIMER_MP2 = 22;
+const CPF_DIMER_SCS_MP2 = 23;
+const CPF_DIMER_MP3 = 24;
+const CPF_DIMER_SCS_MP3 = 25;
+const CPF_DIMER_HF_BSSE = 26;
+const CPF_DIMER_MP2_BSSE = 27;
+const CPF_DIMER_SCS_MP2_BSSE = 28;
+const CPF_DIMER_MP3_BSSE = 29;
+const CPF_DIMER_SCS_MP3_BSSE = 30;
+const CPF_DIMER_EXCHANGE_REPULSION = 31;
+const CPF_DIMER_CHARGE_TRANSFER = 32;
+const CPF_DIMER_AMOUNT_OF_CHARGE_TRANSFER = 33;
+
+const CPF_BASIS_SET = 34;
+const CPF_ELECTRONIC_STATE = 35;
+const CPF_METHOD = 36;
+
+const CPF_APPROXIMATION_AO_POPULATION = 37;
+const CPF_APPROXIMATION_POINT_CHARGE = 38;
+const CPF_APPROXIMATION_DIMERES = 39;
+
+const CPF_ENERGY_REPULSION = 40;
+const CPF_ENERGY_ELECTRONIC = 41;
+const CPF_ENERGY_TOTAL = 42;
+
+
+global function ParseAbinitMpCheckPoint fnum
     local [version, comment] = (fread [fnum, 'CPF Ver.{t:}{t:}\n'])(1);
     local [num_atoms, num_frags] = (fread [fnum, '{n:5}{n:5}\n'])(1);
     local num_dimers = num_frags * (num_frags - 1) / 2;
@@ -42,25 +108,22 @@ global function ParseAbinitMpCheckPointFile fnum
             [x, y, z, hf_mul, mp2_mul, hf_nbo, mp2_nbo, hf_esp, mp2_esp]
         ] = (fread [fnum, '{n:5} {t:2} {c:*4} {t:3} {n:4} {n:4} {n:12*9}\n'])(1);
         atoms(i) = [
-            uid: uid, element: element, atom_type: token atom_type, res_name: res_name,
-            res_index: res_index, frag_index: frag_index, x: x, y: y, z: z,
-            hf_mul: hf_mul, mp2_mul: mp2_mul, hf_nbo: hf_nbo, mp2_nbo: mp2_nbo,
-            hf_esp: hf_esp, mp2_esp: mp2_esp
+            uid, element, token atom_type, res_name, res_index, frag_index, x, y, z,
+            hf_mul, mp2_mul, hf_nbo, mp2_nbo, hf_esp, mp2_esp
         ];
         frag_atoms(frag_index) = append[frag_atoms(frag_index), i];
     endloop
 
-    local monomers = [];
-    monomers.atom_indices = frag_atoms;
-    monomers.num_electrons = ParseFragAttributes [fnum, num_frags];
-    monomers.num_bonds = ParseFragAttributes [fnum, num_frags];
-    local num_bonds = add monomers.num_bonds;
+    local m_atom_indices = frag_atoms,
+          m_num_electrons = ParseFragAttributes [fnum, num_frags],
+          m_num_bonds = ParseFragAttributes [fnum, num_frags];
+    local num_bonds = add m_num_bonds;
     local bda_baas = [];
 
     for num_bonds loop
         // TODO: inverse?
         local [bda, baa] = (fread [fnum, '{n:5}{n:5}\n'])(1);
-        bda_baas = append [bda_baas, [bda: bda, baa: baa]];
+        bda_baas = append [bda_baas, [bda, baa]];
     endloop
 
     local idx = 0, j, d_distances = igen num_dimers;
@@ -71,13 +134,12 @@ global function ParseAbinitMpCheckPointFile fnum
         endloop
     endloop
 
-    local dipoles = [];
+    local dipoles = [], m_hf_dipoles, m_mp2_dipoles;
     for num_frags loop
         local [hf_x, hf_y, hf_z, mp2_x, mp2_y, mp2_z] = (fread [fnum, '{n:*6}'])(1)(1);
-        dipoles.hf = append [dipoles.hf, [x: hf_x, y: hf_y, z: hf_z]];
-        dipoles.mp2 = append [dipoles.mp2, [x: mp2_x, y: mp2_y, z: mp2_z]];
+        m_hf_dipoles = append[m_hf_dipoles, [hf_x, hf_y, hf_z]];
+        m_mp2_dipoles = append[m_mp2_dipoles, [mp2_x, mp2_y, mp2_z]];
     endloop
-    monomers.dipoles = dipoles;
 
     local [basisset, electronic_state, method] = freadb [fnum, 'line', 3];
     local [ao_popl_approx, point_charge_approx, dimeres_approx] = (fread [fnum, '{n:*3}'])(1)(1);
@@ -85,14 +147,16 @@ global function ParseAbinitMpCheckPointFile fnum
     local electronic_energy = (fread [fnum, '{n:}\n'])(1);
     local total_energy = (fread [fnum, '{n:}\n'])(1);
 
+    local m_repulsions, m_electronics, m_mp2s, m_mp3s, m_aos, m_mos;
+
     for num_frags loop
-        local [[m_repl, m_ele, m_mp2, m_mp3], [ao, mo]] = (fread [fnum, '{n:24*4}{n:12*2}\n'])(1);
-        monomers.repulsion = append [monomers.repulsion, m_repl];
-        monomers.electronic = append [monomers.electronic, m_ele];
-        monomers.mp2 = append [monomers.mp2, m_mp2];
-        monomers.mp3 = append [monomers.mp3, m_mp3];
-        monomers.ao = append [monomers.ao, ao];
-        monomers.mo = append [monomers.mo, mo];
+        local [[m_repl, m_ele, m_mp2, m_mp3], [m_ao, m_mo]] = (fread [fnum, '{n:24*4}{n:12*2}\n'])(1);
+        m_repulsions = append [m_repulsions, m_repl];
+        m_electronics = append [m_electronics, m_ele];
+        m_mp2s = append[m_mp2s, m_mp2];
+        m_mp3s = append[m_mp3s, m_mp3];
+        m_aos = append[m_aos, m_ao];
+        m_mos = append[m_mos, m_mo];
     endloop
 
     local repl, ele, es, mp2, scs_mp2, mp3, scs_mp3, hf_bsse, mp2_bsse, scs_mp2_bsse, mp3_bsse, scs_mp3_bsse;
@@ -158,45 +222,55 @@ global function ParseAbinitMpCheckPointFile fnum
     endloop
 
     return [
-        version: version,
-        comment: comment,
-        num_atoms: num_atoms,
-        num_frags: num_frags,
-        atoms: atoms,
-        monomers: monomers,
-        bda_baas: bda_baas,
-        dimers: [
-            distances: d_distances,
+        version,
+        comment,
+        num_atoms,
+        num_frags,
 
-            repulsion: d_repulsion,
-            electronic: d_electronic,
-            electrostatic: d_electrostatic,
-            mp2: d_mp2,
-            scs_mp2: d_scs_mp2,
-            mp3: d_mp3,
-            scs_mp3: d_scs_mp3,
-            hf_bsse: d_hf_bsse,
-            mp2_bsse: d_mp2_bsse,
-            scs_mp2_bsse: d_scs_mp2_bsse,
-            mp3_bsse: d_mp3_bsse,
-            scs_mp3_bsse: d_scs_mp3_bsse,
-            exchange_repulsion: d_ex,
-            charge_transfer: d_ct,
-            amount_of_charge_transfer: d_qij
-        ],
-        basisset: basisset,
-        electronic_state: electronic_state,
-        method: method,
-        approximation: [
-            ao_population: ao_popl_approx,
-            point_charge: point_charge_approx,
-            dimer_es: dimeres_approx
-        ],
-        energy: [
-            repulsion: repulsion_energy,
-            electronic: electronic_energy,
-            total: total_energy
-        ]
+        atoms,
+
+        m_atom_indices,
+        m_num_electrons,
+        m_num_bonds,
+        m_hf_dipoles,
+        m_mp2_dipoles,
+        m_repulsions,
+        m_electronics,
+        m_mp2s,
+        m_mp3s,
+        m_aos,
+        m_mos,
+
+        bda_baas,
+
+        d_distances,
+        d_repulsion,
+        d_electronic,
+        d_electrostatic,
+        d_mp2,
+        d_scs_mp2,
+        d_mp3,
+        d_scs_mp3,
+        d_hf_bsse,
+        d_mp2_bsse,
+        d_scs_mp2_bsse,
+        d_mp3_bsse,
+        d_scs_mp3_bsse,
+        d_ex,
+        d_ct,
+        d_qij,
+
+        basisset,
+        electronic_state,
+        method,
+
+        ao_popl_approx,
+        point_charge_approx,
+        dimeres_approx,
+
+        repulsion_energy,
+        electronic_energy,
+        total_energy
     ];
 endfunction
 
@@ -221,9 +295,9 @@ endfunction
 
 global function AbinitMpCheckPointFileToPDBFile [cpf, fnum]
     local atom;
-    for atom in cpf.atoms loop
+    for atom in cpf(CPF_ATOMS) loop
         local header;
-        if IsStandardResidue atom.res_name then
+        if IsStandardResidue atom(CPF_ATOM_RESNAME) then
             header = 'ATOM  ';
         else
             header = 'HETATM';
@@ -232,8 +306,8 @@ global function AbinitMpCheckPointFileToPDBFile [cpf, fnum]
         fwrite [
             fnum,
             '{t:}{n:5} {t:4} {t:3} A{n:4}    {n:8.3f}{n:8.3f}{n:8.3f}  1.00  1.00          {t:2}\n',
-            header, atom.uid, atom.atom_type, atom.res_name, atom.res_index,
-            atom.x, atom.y, atom.z, atom.element
+            header, atom(CPF_ATOM_UID), atom(CPF_ATOM_ATOMTYPE), atom(CPF_ATOM_RESNAME), atom(CPF_ATOM_RESINDEX),
+            atom(CPF_ATOM_X), atom(CPF_ATOM_Y), atom(CPF_ATOM_Z), atom(CPF_ATOM_ELEMENT)
         ];
     endloop
 endfunction
@@ -386,13 +460,13 @@ global function SetRGBByIfie [ifie, cpf, chains, options]
     local res_keys = cat cResidues chains;
 
     local i;
-    for i = 1, cpf.num_frags loop
+    for i = 1, cpf(CPF_NUM_FRAGMENTS) loop
         local color = colors(i);
         if ligandmask(i) then
             color = ligandrgb;
         endif
 
-        local frag_atoms = atom_keys[cpf.monomers.atom_indices(i)];
+        local frag_atoms = atom_keys[cpf(CPF_MONOMER_ATOM_INDICES)(i)];
 
         aSetRGB [frag_atoms, color];
         rSetRibbonRGB [res_keys(i), color];
@@ -450,29 +524,20 @@ const LIGAND_PICKER = [
 ];
 
 
-const FSB_PANEL = [
-    title: 'Open CPF File',
-    FSB: [
-        name: 'fsb',
-        mode: 'open'
-    ]
-];
-
-
 function GetIfie [cpf, key]
     local e;
     if key == 'MP2' then
-        e = cpf.dimers.electrostatic + cpf.dimers.exchange_repulsion + cpf.dimers.charge_transfer + cpf.dimers.mp2;
+        e = cpf(CPF_DIMER_ELECTROSTATIC) + cpf(CPF_DIMER_EXCHANGE_REPULSION) + cpf(CPF_DIMER_CHARGE_TRANSFER) + cpf(CPF_DIMER_MP2);
     elseif key == 'HF' then
-        e = cpf.dimers.electrostatic + cpf.dimers.exchange_repulsion + cpf.dimers.charge_transfer;
+        e = cpf(CPF_DIMER_ELECTROSTATIC) + cpf(CPF_DIMER_EXCHANGE_REPULSION) + cpf(CPF_DIMER_CHARGE_TRANSFER);
     elseif key == 'ES' then
-        e = cpf.dimers.electrostatic;
+        e = cpf(CPF_DIMER_ELECTROSTATIC);
     elseif key == 'EX' then
-        e = cpf.dimers.exchange_repulsion;
+        e = cpf(CPF_DIMER_EXCHANGE_REPULSION);
     elseif key == 'CT+mix' then
-        e = cpf.dimers.charge_transfer;
+        e = cpf(CPF_DIMER_CHARGE_TRANSFER);
     elseif key == 'DI' then
-        e = cpf.dimers.mp2;
+        e = cpf(CPF_DIMER_MP2);
     endif
     e | abs e > 10 = 0;
     return e * HARTREE;
@@ -481,7 +546,7 @@ endfunction
 
 global function GetCpfAtomByAtomKey [cpf, chains, atom_key]
     local idx = indexof [atom_key, cat cAtoms chains];
-    return cpf.atoms(idx);
+    return cpf(CPF_ATOMS)(idx);
 endfunction
 
 
@@ -505,8 +570,8 @@ endfunction
 
 function DetectLigand [cpf]
     local atom;
-    for atom in cpf.atoms loop
-        if not orE eqE [atom.res_name, STANDARD_RESIDUES] then
+    for atom in cpf(CPF_ATOMS) loop
+        if not orE eqE [atom(CPF_ATOM_RESNAME), STANDARD_RESIDUES] then
             return atom;
         endif
     endloop
@@ -525,11 +590,11 @@ function ShowVisualizationPanel [cpf, chains, options]
     local ligands;
     local ligand_names;
     if detected_ligand === [] then
-        ligands = [cpf.atoms(1).frag_index];
-        ligand_names = [swrite ['{} {}', cpf.atoms(1).res_name, cpf.atoms(1).res_index]];
+        ligands = [cpf(CPF_ATOMS)(1)(CPF_ATOM_FRAGINDEX)];
+        ligand_names = [swrite ['{} {}', cpf(CPF_ATOMS)(1)(CPF_ATOM_RESNAME), cpf(CPF_ATOMS)(1)(CPF_ATOM_RESINDEX)]];
     else
-        ligands = [detected_ligand.frag_index];
-        ligand_names = [swrite ['{} {}', detected_ligand.res_name, detected_ligand.res_index]];
+        ligands = [detected_ligand(CPF_ATOM_FRAGINDEX)];
+        ligand_names = [swrite ['{} {}', detected_ligand(CPF_ATOM_RESNAME), detected_ligand(CPF_ATOM_RESINDEX)]];
     endif
 
     local new_ligand;
@@ -581,14 +646,14 @@ function ShowVisualizationPanel [cpf, chains, options]
         elseif trigger == 'set_ligand' then
             new_ligand = PickLigand[cpf, chains];
             if not [new_ligand === []] then
-                ligands = [new_ligand.frag_index];
-                ligand_names = [swrite ['{} {}', new_ligand.res_name, new_ligand.res_index]];
+                ligands = [new_ligand(CPF_ATOM_FRAGINDEX)];
+                ligand_names = [swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
             endif
         elseif trigger == 'add_ligand' then
             new_ligand = PickLigand[cpf, chains];
-            if not orE eqE [ligands, new_ligand.frag_index] then
-                ligands = append [ligands, new_ligand.frag_index];
-                ligand_names = append [ligand_names, swrite ['{} {}', new_ligand.res_name, new_ligand.res_index]];
+            if not orE eqE [ligands, new_ligand(CPF_ATOM_FRAGINDEX)] then
+                ligands = append [ligands, new_ligand(CPF_ATOM_FRAGINDEX)];
+                ligand_names = append [ligand_names, swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
             endif
         endif
 
@@ -607,14 +672,59 @@ function ShowVisualizationPanel [cpf, chains, options]
 endfunction
 
 
+function Cpf2SvlExePath []
+    local exe = tok_cat ['$HOME/moefiles/fmoe/bin/cpf2svl.', MOE_ARCH, '.exe'];
+    if ftype exe === 'file' then
+        return exe;
+    endif
+endfunction
+
+
+global function ParseAbinitMpCheckPointFileExe path
+    local exe = Cpf2SvlExePath [];
+    if exe === [] then
+        return;
+    endif
+    local svl_path = fnametemp '$TMP/fmoe_parsed_cpf*.svlb';
+    local pkey = exe_open_shell [exe, [], [CPF_PATH: path, SVL_PATH: svl_path]];
+    while exe_status pkey loop
+        sleep 0.01;
+    endloop
+    if not exe_exitcode pkey then
+        return freadb [svl_path, 'SVL', 50];
+    endif
+endfunction
+
+
+global function ParseAbinitMpCheckPointFileSVL path
+    local file = fopenr path;
+    local cpf = ParseAbinitMpCheckPoint file;
+    fclose file;
+    return cpf;
+endfunction
+
+
+global function ParseAbinitMpCheckPointFile path
+    local msg = Message [0, twrite ['Parsing CPF file {}...', path]];
+    local exe = Cpf2SvlExePath[];
+    local result;
+    if exe === [] then
+        result = ParseAbinitMpCheckPointFileSVL path;
+    else
+        result = ParseAbinitMpCheckPointFileExe path;
+    endif
+    Message [msg, []];
+    return result;
+endfunction
+
+
 global function FMOVisualization []
-    local path = (WindowPrompt [FSB_PANEL, [fsb: '*.cpf']]).fsb;
+    local path = FilePrompt [title: 'open cpf file', mode: 'open', filter: '*.cpf'];
     if path === [] then
         return;
     endif
-    local cpf_file = fopenr path;
-    local cpf = ParseAbinitMpCheckPointFile cpf_file;
-    fclose cpf_file;
+
+    local cpf = ParseAbinitMpCheckPointFile path;
 
     local chains = OpenCPF cpf;
     rSetRibbonColorBy [cResidues chains, 'rgb'];

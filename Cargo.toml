@@ -1,0 +1,11 @@
+[package]
+name = "cpf"
+version = "0.1.0"
+authors = ["Hirotomo Moriwaki <philopon.dependence@gmail.com>"]
+
+[dependencies]
+byteorder = "1.2"
+lazy_static = "1.1.0"
+
+[profile.release]
+lto = true
