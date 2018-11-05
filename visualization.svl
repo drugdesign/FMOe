@@ -569,14 +569,27 @@ function PickLigand [cpf, chains]
 endfunction
 
 
-function DetectLigand [cpf]
+function DetectLigandAtom [cpf]
     local atom;
-    for atom in cpf(CPF_ATOMS) loop
-        if not orE eqE [atom(CPF_ATOM_RESNAME), STANDARD_RESIDUES] then
-            return atom;
+    local res_names = cat (tr cpf(CPF_ATOMS))[CPF_ATOM_RESNAME];
+    local non_standards = cpf(CPF_ATOMS) | (not app orE apt eqE [res_names, [STANDARD_RESIDUES]]);
+    local sizes;
+    for atom in non_standards loop
+        local uid = atom(CPF_ATOM_UID);
+        local idx = totok atom(CPF_ATOM_RESINDEX);
+        local [_, n] = tagpeek [sizes, idx];
+        if n === [] then
+            n = 0;
         endif
+        sizes = tagpoke [sizes, idx, [uid, n + 1]];
     endloop
-    return [];
+
+    if sizes === [] then
+        return [];
+    endif
+
+    idx = first second sizes(x_max app second second untag sizes);
+    return cpf(CPF_ATOMS)(idx);
 endfunction
 
 
@@ -587,15 +600,15 @@ function ShowVisualizationPanel [cpf, chains, options]
     local rgbmin = 0x0000ff;
     local rgb0 = 0xffffff;
     local rgbmax = 0xff0000;
-    local detected_ligand = DetectLigand [cpf];
+    local detected_ligand_atom = DetectLigandAtom [cpf];
     local ligands;
     local ligand_names;
-    if detected_ligand === [] then
+    if detected_ligand_atom === [] then
         ligands = [cpf(CPF_ATOMS)(1)(CPF_ATOM_FRAGINDEX)];
         ligand_names = [swrite ['{} {}', cpf(CPF_ATOMS)(1)(CPF_ATOM_RESNAME), cpf(CPF_ATOMS)(1)(CPF_ATOM_RESINDEX)]];
     else
-        ligands = [detected_ligand(CPF_ATOM_FRAGINDEX)];
-        ligand_names = [swrite ['{} {}', detected_ligand(CPF_ATOM_RESNAME), detected_ligand(CPF_ATOM_RESINDEX)]];
+        ligands = [detected_ligand_atom(CPF_ATOM_FRAGINDEX)];
+        ligand_names = [swrite ['{} {}', detected_ligand_atom(CPF_ATOM_RESNAME), detected_ligand_atom(CPF_ATOM_RESINDEX)]];
     endif
 
     local new_ligand;
