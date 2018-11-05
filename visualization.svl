@@ -732,8 +732,13 @@ global function ParseAbinitMpCheckPointFile path
 endfunction
 
 
-global function FMOVisualization []
-    local path = FilePrompt [title: 'open cpf file', mode: 'open', filter: '*.cpf'];
+global function FMOVisualization [path]
+    if path === [] then
+        path = FilePrompt [title: 'open cpf file', mode: 'open', filter: '*.cpf'];
+    else
+        path = fabsname path;
+    endif
+
     if path === [] then
         return;
     endif
@@ -743,5 +748,6 @@ global function FMOVisualization []
     local chains = OpenCPF cpf;
     rSetRibbonColorBy [cResidues chains, 'rgb'];
     aSetColorBy [cat cAtoms chains | app orE apt eqE [[totok "CH"], aElement cat cAtoms chains], 'a:rgb'];
+
     ShowVisualizationPanel [cpf, chains, []];
 endfunction
