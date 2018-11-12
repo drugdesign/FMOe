@@ -729,7 +729,7 @@ function ShowVisualizationPanel [cpf, chains, options]
         elseif trigger == 'rgb0' then
             rgb0 = values.rgb0;
         elseif trigger == 'rgbmax' then
-            rgb0 = values.rgbmax;
+            rgbmax = values.rgbmax;
         elseif trigger == 'ligandrgb' then
             ligandrgb = values.ligandrgb;
         elseif trigger == 'visualize_energy' then
