@@ -507,6 +507,7 @@ endfunction
 
 
 const MAIN_PANEL = [
+    name: 'fmo_visualization',
     title: 'FMO Visualization',
     windowName: 'FMOVisualization',
     Vbox: [
@@ -722,6 +723,15 @@ function ShowVisualizationPanel [cpf, chains, options]
         *ligands = [detected_ligand_atom(CPF_ATOM_FRAGINDEX)];
         ligand_names = [swrite ['{} {}', detected_ligand_atom(CPF_ATOM_RESNAME), detected_ligand_atom(CPF_ATOM_RESINDEX)]];
     endif
+
+    local window_title;
+    if options.title === [] then
+        window_title = twrite ['FMO Visualization - {}', uniq cName chains];
+    else
+        window_title = options.title;
+    endif
+
+    WindowSetAttr [wkey, [fmo_visualization: [title: window_title]]];
 
     local new_ligand;
     local ligandrgb = 0xffff00;
