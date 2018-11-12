@@ -514,15 +514,20 @@ const MAIN_PANEL = [
         extendH: 1,
         Hbox: [
             extendH: 1,
-            Label: [text: 'Ligand:', font: 'mediumBold'],
+            Label: [text: 'Ligand:', font: 'mediumFixedBold'],
             Button: [name: 'set_ligand', onTrigger: 'return'],
             Button: [name: 'add_ligand', onTrigger: 'return', text: '+'],
             Color: [name: 'ligandrgb', onTrigger: 'return']
         ],
         Hbox: [
             extendH: 1,
-            Label: [text: 'Energy:', font: 'mediumBold'],
+            Label: [text: 'Energy:', font: 'mediumFixedBold'],
             Radio: [name: 'visualize_energy', type: 'char', text: ['MP2', 'HF', 'ES', 'EX', 'CT+mix', 'DI'], onTrigger: 'return']
+        ],
+        Hbox: [
+            extendH: 1,
+            Label: [text: ' Color:', font: 'mediumFixedBold'],
+            Radio: [name: 'color_atoms', type: 'char', text: ['Carbon', 'All'], onTrigger: 'return']
         ],
         Separator: [
             extendH: 1
@@ -746,6 +751,9 @@ function ShowVisualizationPanel [cpf, chains, options]
         EnergyInspector [cpf, chains, ligands];
     endif
 
+    rSetRibbonColorBy [cResidues chains, 'rgb'];
+    aSetColorBy [cat cAtoms chains | app orE apt eqE [[totok "CH"], aElement cat cAtoms chains], 'a:rgb'];
+
     WindowShow wkey;
     loop
         SetRGBByIfie [ifie, cpf, chains, [range: value, rgbmin: rgbmin, rgb0: rgb0, rgbmax: rgbmax, ligandrgb: ligandrgb]];
@@ -791,6 +799,15 @@ function ShowVisualizationPanel [cpf, chains, options]
             if not [new_ligand === []] then
                 *ligands = [new_ligand(CPF_ATOM_FRAGINDEX)];
                 ligand_names = [swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
+            endif
+        elseif trigger == 'color_atoms' then
+            if values.color_atoms === 'Carbon' then
+                rSetRibbonColorBy [cResidues chains, 'rgb'];
+                aSetColorBy [cAtoms chains, 'element'];
+                aSetColorBy [cat cAtoms chains | app orE apt eqE [[totok "CH"], aElement cat cAtoms chains], 'a:rgb'];
+            else
+                rSetRibbonColorBy [cResidues chains, 'rgb'];
+                aSetColorBy [cAtoms chains, 'a:rgb'];
             endif
         elseif trigger == 'add_ligand' then
             new_ligand = PickLigand[cpf, chains];
@@ -876,7 +893,5 @@ global function FMOVisualization [path]
     local cpf = ParseAbinitMpCheckPointFile path;
 
     local chains = OpenCPF cpf;
-    rSetRibbonColorBy [cResidues chains, 'rgb'];
-    aSetColorBy [cat cAtoms chains | app orE apt eqE [[totok "CH"], aElement cat cAtoms chains], 'a:rgb'];
     ShowVisualizationPanel [cpf, chains, []];
 endfunction
