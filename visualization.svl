@@ -547,7 +547,11 @@ endfunction
 
 global function GetCpfAtomByAtomKey [cpf, chains, atom_key]
     local idx = indexof [atom_key, cat cAtoms chains];
-    return cpf(CPF_ATOMS)(idx);
+    if idx === 0 then
+        return [];
+    else
+        return cpf(CPF_ATOMS)(idx);
+    endif
 endfunction
 
 
@@ -593,6 +597,77 @@ function DetectLigandAtom [cpf]
 endfunction
 
 
+function EnergyInspector [cpf, chains, dligands]
+    local all = cat cAtoms chains;
+    local old_selected_uids = [];
+    local old_ligands = [];
+    local msg_key = Message [0, ''];
+    local i;
+    local ex = [];
+    local es = [];
+    local ct = [];
+    local di = [];
+
+    loop
+        local selected = apt GetCpfAtomByAtomKey [[cpf], [chains], SelectedAtoms[]];
+        local selected_uids = apt get [selected, [CPF_ATOM_UID]];
+        local update_selected = 0;
+        local ligands = *dligands;
+
+        if not [ligands === old_ligands] then
+            ex = IfieWith[cpf(CPF_DIMER_EXCHANGE_REPULSION), ligands];
+            es = IfieWith[cpf(CPF_DIMER_ELECTROSTATIC), ligands];
+            ct = IfieWith[cpf(CPF_DIMER_CHARGE_TRANSFER), ligands];
+            di = IfieWith[cpf(CPF_DIMER_MP2), ligands];
+        endif
+        old_ligands = ligands;
+
+        if length selected_uids === 0 then
+            Message [msg_key, ''];
+
+        elseif not [selected_uids === old_selected_uids] then
+            local counter = [];
+            local frag_idx;
+            local target_frag_indices = [];
+
+            for frag_idx in apt get [selected, CPF_ATOM_FRAGINDEX] loop
+                local cur_num = tagpeek [counter, totok frag_idx];
+                if cur_num === [] then
+                    cur_num = 0;
+                endif
+                counter = tagpoke [counter, totok frag_idx, cur_num + 1];
+            endloop
+
+            if length counter === 1 then
+                target_frag_indices = toint first first counter;
+            else
+                local count;
+                for [frag_idx, count] in counter loop
+                    if count > length cpf(CPF_MONOMER_ATOM_INDICES)(toint frag_idx) / 2 then
+                        target_frag_indices[length target_frag_indices + 1] = toint frag_idx;
+                    endif
+                endloop
+            endif
+
+            local p_es = add es[target_frag_indices] * HARTREE;
+            local p_ex = add ex[target_frag_indices] * HARTREE;
+            local p_ct = add ct[target_frag_indices] * HARTREE;
+            local p_di = add di[target_frag_indices] * HARTREE;
+            local p_hf = p_es + p_ex + p_ct;
+            local p_mp2 = p_hf + p_di;
+
+            local result = twrite ['ES:     {}\nEX:     {}\nCT+mix: {}\nDI:     {}\nHF:     {}\nMP2:    {}\n', p_es, p_ex, p_ct, p_di, p_hf, p_mp2];
+
+            write result;
+            Message [msg_key, result];
+        endif
+        old_selected_uids = selected_uids;
+
+        sleep 0.2;
+    endloop
+endfunction
+
+
 function ShowVisualizationPanel [cpf, chains, options]
     local wkey = WindowCreate MAIN_PANEL;
 
@@ -601,22 +676,26 @@ function ShowVisualizationPanel [cpf, chains, options]
     local rgb0 = 0xffffff;
     local rgbmax = 0xff0000;
     local detected_ligand_atom = DetectLigandAtom [cpf];
-    local ligands;
+    local ligands = dvar_open [];
     local ligand_names;
     if detected_ligand_atom === [] then
-        ligands = [cpf(CPF_ATOMS)(1)(CPF_ATOM_FRAGINDEX)];
+        *ligands = [cpf(CPF_ATOMS)(1)(CPF_ATOM_FRAGINDEX)];
         ligand_names = [swrite ['{} {}', cpf(CPF_ATOMS)(1)(CPF_ATOM_RESNAME), cpf(CPF_ATOMS)(1)(CPF_ATOM_RESINDEX)]];
     else
-        ligands = [detected_ligand_atom(CPF_ATOM_FRAGINDEX)];
+        *ligands = [detected_ligand_atom(CPF_ATOM_FRAGINDEX)];
         ligand_names = [swrite ['{} {}', detected_ligand_atom(CPF_ATOM_RESNAME), detected_ligand_atom(CPF_ATOM_RESINDEX)]];
     endif
 
     local new_ligand;
     local ligandrgb = 0xffff00;
 
-    local ifie = IfieWith [GetIfie [cpf, ifie_cat], ligands];
+    local ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
     local range = GetRange ifie;
     local value = range;
+
+    if second task_fork [master: 'parent'] === 'child' then
+        EnergyInspector [cpf, chains, ligands];
+    endif
 
     WindowShow wkey;
     loop
@@ -655,24 +734,24 @@ function ShowVisualizationPanel [cpf, chains, options]
             ligandrgb = values.ligandrgb;
         elseif trigger == 'visualize_energy' then
             ifie_cat = values.visualize_energy;
-            ifie = IfieWith [GetIfie [cpf, ifie_cat], ligands];
+            ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
             range = GetRange ifie * 2;
         elseif trigger == 'set_ligand' then
             new_ligand = PickLigand[cpf, chains];
             if not [new_ligand === []] then
-                ligands = [new_ligand(CPF_ATOM_FRAGINDEX)];
+                *ligands = [new_ligand(CPF_ATOM_FRAGINDEX)];
                 ligand_names = [swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
             endif
         elseif trigger == 'add_ligand' then
             new_ligand = PickLigand[cpf, chains];
-            if not orE eqE [ligands, new_ligand(CPF_ATOM_FRAGINDEX)] then
-                ligands = append [ligands, new_ligand(CPF_ATOM_FRAGINDEX)];
+            if not orE eqE [*ligands, new_ligand(CPF_ATOM_FRAGINDEX)] then
+                *ligands = append [*ligands, new_ligand(CPF_ATOM_FRAGINDEX)];
                 ligand_names = append [ligand_names, swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
             endif
         endif
 
         if orE[trigger == 'set_ligand', trigger == 'add_ligand'] then
-            ifie = IfieWith [GetIfie [cpf, ifie_cat], ligands];
+            ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
             range = GetRange ifie;
             value = range;
         endif
@@ -748,6 +827,5 @@ global function FMOVisualization [path]
     local chains = OpenCPF cpf;
     rSetRibbonColorBy [cResidues chains, 'rgb'];
     aSetColorBy [cat cAtoms chains | app orE apt eqE [[totok "CH"], aElement cat cAtoms chains], 'a:rgb'];
-
     ShowVisualizationPanel [cpf, chains, []];
 endfunction
