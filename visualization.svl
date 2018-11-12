@@ -383,6 +383,35 @@ global function IfieWith [ifies, v]
 endfunction
 
 
+function _GetNeighborFragmentMask [cpf, frag]
+    cpf = cpf(1);
+    local frag_atoms = cpf(CPF_MONOMER_ATOM_INDICES)(frag);
+    local a, b, masks = [zero igen cpf(CPF_NUM_FRAGMENTS)];
+    for [a, b] in cpf(CPF_BDA_BAAS) loop
+        local other_atom = 0;
+        if orE (a == frag_atoms) then
+            other_atom = b;
+        elseif orE (b == frag_atoms) then
+            other_atom = a;
+        endif
+        if other_atom then
+            masks = append[masks, app orE eqE [cpf(CPF_MONOMER_ATOM_INDICES), other_atom]];
+        endif
+    endloop
+    return orE masks;
+endfunction
+
+
+function GetNeighborFragmentMask [cpf, frags]
+    local neighbors = orE apt _GetNeighborFragmentMask [[[cpf]], frags];
+    local frag;
+    for frag in frags loop
+        neighbors[frag] = 0;
+    endloop
+    return neighbors;
+endfunction
+
+
 function InterpolateRGB [rgb0, rgb1, r]
     local [r0, g0, b0] = rgb0;
     local [r1, g1, b1] = rgb1;
@@ -540,7 +569,6 @@ function GetIfie [cpf, key]
     elseif key == 'DI' then
         e = cpf(CPF_DIMER_MP2);
     endif
-    e | abs e > 10 = 0;
     return e * HARTREE;
 endfunction
 
@@ -615,10 +643,19 @@ function EnergyInspector [cpf, chains, dligands]
         local ligands = *dligands;
 
         if not [ligands === old_ligands] then
+            local neighbors = GetNeighborFragmentMask [cpf, ligands];
             ex = IfieWith[cpf(CPF_DIMER_EXCHANGE_REPULSION), ligands];
+            ex | neighbors = 0;
+            ex[ligands] = 0;
             es = IfieWith[cpf(CPF_DIMER_ELECTROSTATIC), ligands];
+            es | neighbors = 0;
+            es[ligands] = 0;
             ct = IfieWith[cpf(CPF_DIMER_CHARGE_TRANSFER), ligands];
+            ct | neighbors = 0;
+            ct[ligands] = 0;
             di = IfieWith[cpf(CPF_DIMER_MP2), ligands];
+            di | neighbors = 0;
+            di[ligands] = 0;
         endif
         old_ligands = ligands;
 
@@ -656,7 +693,7 @@ function EnergyInspector [cpf, chains, dligands]
             local p_hf = p_es + p_ex + p_ct;
             local p_mp2 = p_hf + p_di;
 
-            local result = twrite ['ES:     {}\nEX:     {}\nCT+mix: {}\nDI:     {}\nHF:     {}\nMP2:    {}\n', p_es, p_ex, p_ct, p_di, p_hf, p_mp2];
+            local result = twrite ['========\nES:     {}\nEX:     {}\nCT+mix: {}\nDI:     {}\nHF:     {}\nMP2:    {}\n', p_es, p_ex, p_ct, p_di, p_hf, p_mp2];
 
             write result;
             Message [msg_key, result];
@@ -690,6 +727,8 @@ function ShowVisualizationPanel [cpf, chains, options]
     local ligandrgb = 0xffff00;
 
     local ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
+    ifie | GetNeighborFragmentMask [cpf, *ligands] = 0;
+
     local range = GetRange ifie;
     local value = range;
 
@@ -735,6 +774,7 @@ function ShowVisualizationPanel [cpf, chains, options]
         elseif trigger == 'visualize_energy' then
             ifie_cat = values.visualize_energy;
             ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
+            ifie | GetNeighborFragmentMask [cpf, *ligands] = 0;
             range = GetRange ifie * 2;
         elseif trigger == 'set_ligand' then
             new_ligand = PickLigand[cpf, chains];
@@ -752,6 +792,7 @@ function ShowVisualizationPanel [cpf, chains, options]
 
         if orE[trigger == 'set_ligand', trigger == 'add_ligand'] then
             ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
+            ifie | GetNeighborFragmentMask [cpf, *ligands] = 0;
             range = GetRange ifie;
             value = range;
         endif
