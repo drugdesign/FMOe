@@ -517,7 +517,9 @@ const MAIN_PANEL = [
             Label: [text: 'Ligand:', font: 'mediumFixedBold'],
             Button: [name: 'set_ligand', onTrigger: 'return'],
             Button: [name: 'add_ligand', onTrigger: 'return', text: '+'],
-            Color: [name: 'ligandrgb', onTrigger: 'return']
+            Color: [name: 'ligandrgb', onTrigger: 'return'],
+            Label: [extendH: 1],
+            Button: [text: 'list', name: 'listup_ifie']
         ],
         Hbox: [
             extendH: 1,
@@ -722,7 +724,43 @@ function EnergyInspector [cpf, chains, dligands]
 endfunction
 
 
-function ShowVisualizationPanel [cpf, chains, options]
+function OutputIfieList [cpf, ligands]
+    local p_es = IfieWith [cpf(CPF_DIMER_ELECTROSTATIC), ligands] * HARTREE;
+    local p_ex = IfieWith [cpf(CPF_DIMER_EXCHANGE_REPULSION), ligands] * HARTREE;
+    local p_ct = IfieWith [cpf(CPF_DIMER_CHARGE_TRANSFER), ligands] * HARTREE;
+    local p_di = IfieWith [cpf(CPF_DIMER_MP2), ligands] * HARTREE;
+    local p_hf = p_es + p_ex + p_ct;
+    local p_mp2 = p_hf + p_di;
+    local fragi, ai;
+    write 'index,name,MP2,HF,ES,EX,CT+mix,DI\n';
+    for fragi = 1, length p_es loop
+        local counter = [];
+        for ai in cpf(CPF_MONOMER_ATOM_INDICES)(fragi) loop
+            local aresname = cpf(CPF_ATOMS)(ai)(CPF_ATOM_RESNAME);
+            local current = tagpeek [counter, aresname];
+            if current === [] then
+                counter = tagpoke [counter, aresname, 1];
+            else
+                counter = tagpoke [counter, aresname, current + 1];
+            endif
+        endloop
+        local resname = first counter(x_max second untag counter);
+        write [
+            '{},{},{},{},{},{},{},{}\n',
+            cpf(CPF_ATOMS)(cpf(CPF_MONOMER_ATOM_INDICES)(fragi)(1))(CPF_ATOM_FRAGINDEX),
+            resname,
+            p_mp2(fragi),
+            p_hf(fragi),
+            p_es(fragi),
+            p_ex(fragi),
+            p_ct(fragi),
+            p_di(fragi)
+        ];
+    endloop
+endfunction
+
+
+function ShowVisualizationPanel [cpf, chains]
     local wkey = WindowCreate MAIN_PANEL;
 
     local rgbmin = 0x0000ff;
@@ -739,14 +777,7 @@ function ShowVisualizationPanel [cpf, chains, options]
         ligand_names = [swrite ['{} {}', detected_ligand_atom(CPF_ATOM_RESNAME), detected_ligand_atom(CPF_ATOM_RESINDEX)]];
     endif
 
-    local window_title;
-    if options.title === [] then
-        window_title = twrite ['FMO Visualization - {}', uniq cName chains];
-    else
-        window_title = options.title;
-    endif
-
-    WindowSetAttr [wkey, [fmo_visualization: [title: window_title]]];
+    WindowSetAttr [wkey, [fmo_visualization: [title: twrite ['FMO Visualization - {}', uniq cName chains]]]];
 
     local new_ligand;
     local ligandrgb = 0xffff00;
@@ -876,6 +907,8 @@ function ShowVisualizationPanel [cpf, chains, options]
             else
                 WindowSetData [wkey, [preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0]];
             endif
+        elseif trigger === 'listup_ifie' then
+            OutputIfieList [cpf, *ligands];
         endif
 
         if update_ifie then
@@ -955,5 +988,5 @@ global function FMOVisualization [path]
     local cpf = ParseAbinitMpCheckPointFile path;
 
     local chains = OpenCPF cpf;
-    ShowVisualizationPanel [cpf, chains, []];
+    ShowVisualizationPanel [cpf, chains];
 endfunction
