@@ -10,14 +10,12 @@
     git clone https://github.com/philopon/FMOE.git ~/moefiles/FMOE
     ```
 
-2. load main.svl from $HOME/moefiles/start.svl
+2. load loader.svl from \$HOME/moefiles/start.svl
 
     for example:
 
     ```
     local function main []
-        load '$HOME/moefiles/FMOE/fragmentation.svl';
-        load '$HOME/moefiles/FMOE/visualization.svl';
-        ReadMenuFile '$HOME/moefiles/FMOE/menu';  // add menu item (optional)
+        run '$HOME/moefiles/FMOE/loader.svl';
     endfunction
     ```
