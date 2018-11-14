@@ -522,12 +522,24 @@ const MAIN_PANEL = [
         Hbox: [
             extendH: 1,
             Label: [text: 'Energy:', font: 'mediumFixedBold'],
-            Radio: [name: 'visualize_energy', type: 'char', text: ['MP2', 'HF', 'ES', 'EX', 'CT+mix', 'DI'], onTrigger: 'return']
+            Checkbox: [name: 'preset_MP2', text: 'MP2', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'preset_HF', text: 'HF', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'preset_ES', text: 'ES', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'preset_EX', text: 'EX', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'preset_CT_mix', text: 'CT+mix', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'preset_DI', text: 'DI', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Label: [minWidth: 2],
+            Label: [text: '(', font: 'largeBold'],
+            Checkbox: [name: 'component_ES', text: 'ES', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'component_EX', text: 'EX', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'component_CT_mix', text: 'CT+mix', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'component_DI', text: 'DI', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Label: [text: ')', font: 'largeBold']
         ],
         Hbox: [
             extendH: 1,
-            Label: [text: ' Color:', font: 'mediumFixedBold'],
-            Radio: [name: 'color_atoms', type: 'char', text: ['Carbon', 'All'], onTrigger: 'return']
+            Label: [text: 'Color: ', font: 'mediumFixedBold'],
+            Radio: [name: 'color_atoms', type: 'char', text: ['Carbon', 'All'], onTrigger: 'return', minWidth: 4]
         ],
         Separator: [
             extendH: 1
@@ -560,20 +572,19 @@ const LIGAND_PICKER = [
 ];
 
 
-function GetIfie [cpf, key]
-    local e;
-    if key == 'MP2' then
-        e = cpf(CPF_DIMER_ELECTROSTATIC) + cpf(CPF_DIMER_EXCHANGE_REPULSION) + cpf(CPF_DIMER_CHARGE_TRANSFER) + cpf(CPF_DIMER_MP2);
-    elseif key == 'HF' then
-        e = cpf(CPF_DIMER_ELECTROSTATIC) + cpf(CPF_DIMER_EXCHANGE_REPULSION) + cpf(CPF_DIMER_CHARGE_TRANSFER);
-    elseif key == 'ES' then
-        e = cpf(CPF_DIMER_ELECTROSTATIC);
-    elseif key == 'EX' then
-        e = cpf(CPF_DIMER_EXCHANGE_REPULSION);
-    elseif key == 'CT+mix' then
-        e = cpf(CPF_DIMER_CHARGE_TRANSFER);
-    elseif key == 'DI' then
-        e = cpf(CPF_DIMER_MP2);
+function GetIfieComponent [cpf, cat]
+    local e = zero igen length cpf(CPF_DIMER_ELECTRONIC);
+    if cat.es then
+        e = e + cpf(CPF_DIMER_ELECTROSTATIC);
+    endif
+    if cat.ex then
+        e = e + cpf(CPF_DIMER_EXCHANGE_REPULSION);
+    endif
+    if cat.ct then
+        e = e + cpf(CPF_DIMER_CHARGE_TRANSFER);
+    endif
+    if cat.di then
+        e = e + cpf(CPF_DIMER_MP2);
     endif
     return e * HARTREE;
 endfunction
@@ -714,7 +725,6 @@ endfunction
 function ShowVisualizationPanel [cpf, chains, options]
     local wkey = WindowCreate MAIN_PANEL;
 
-    local ifie_cat = 'MP2';
     local rgbmin = 0x0000ff;
     local rgb0 = 0xffffff;
     local rgbmax = 0xff0000;
@@ -741,24 +751,31 @@ function ShowVisualizationPanel [cpf, chains, options]
     local new_ligand;
     local ligandrgb = 0xffff00;
 
-    local ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
-    ifie | GetNeighborFragmentMask [cpf, *ligands] = 0;
-
-    local range = GetRange ifie;
-    local value = range;
-
     if second task_fork [master: 'parent'] === 'child' then
         EnergyInspector [cpf, chains, ligands];
     endif
+
+    WindowSetData [wkey, [
+        preset_MP2: 1,
+        component_ES: 1,
+        component_EX: 1,
+        component_CT_mix: 1,
+        component_DI: 1
+    ]];
+    local component = [es: 1, ex: 1, ct: 1, di: 1];
+    local ifie = IfieWith [GetIfieComponent [cpf, component], *ligands];
+    ifie | GetNeighborFragmentMask [cpf, *ligands] = 0;
+    local range = GetRange ifie;
+    local value = range;
 
     rSetRibbonColorBy [cResidues chains, 'rgb'];
     aSetColorBy [cat cAtoms chains | app orE apt eqE [[totok "CH"], aElement cat cAtoms chains], 'a:rgb'];
 
     WindowShow wkey;
     loop
+        local update_ifie = 0;
         SetRGBByIfie [ifie, cpf, chains, [range: value, rgbmin: rgbmin, rgb0: rgb0, rgbmax: rgbmax, ligandrgb: ligandrgb]];
         WindowSetData [wkey, [
-            visualize_energy: ifie_cat,
             energymin: -value, energymax: value,
             leftslider: -value / range * RESOLUTION,
             rightslider: value / range * RESOLUTION,
@@ -789,16 +806,19 @@ function ShowVisualizationPanel [cpf, chains, options]
             rgbmax = values.rgbmax;
         elseif trigger == 'ligandrgb' then
             ligandrgb = values.ligandrgb;
-        elseif trigger == 'visualize_energy' then
-            ifie_cat = values.visualize_energy;
-            ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
-            ifie | GetNeighborFragmentMask [cpf, *ligands] = 0;
-            range = GetRange ifie * 2;
         elseif trigger == 'set_ligand' then
+            update_ifie = 1;
             new_ligand = PickLigand[cpf, chains];
             if not [new_ligand === []] then
                 *ligands = [new_ligand(CPF_ATOM_FRAGINDEX)];
                 ligand_names = [swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
+            endif
+        elseif trigger == 'add_ligand' then
+            update_ifie = 1;
+            new_ligand = PickLigand[cpf, chains];
+            if not orE eqE [*ligands, new_ligand(CPF_ATOM_FRAGINDEX)] then
+                *ligands = append [*ligands, new_ligand(CPF_ATOM_FRAGINDEX)];
+                ligand_names = append [ligand_names, swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
             endif
         elseif trigger == 'color_atoms' then
             if values.color_atoms === 'Carbon' then
@@ -809,25 +829,67 @@ function ShowVisualizationPanel [cpf, chains, options]
                 rSetRibbonColorBy [cResidues chains, 'rgb'];
                 aSetColorBy [cAtoms chains, 'a:rgb'];
             endif
-        elseif trigger == 'add_ligand' then
-            new_ligand = PickLigand[cpf, chains];
-            if not orE eqE [*ligands, new_ligand(CPF_ATOM_FRAGINDEX)] then
-                *ligands = append [*ligands, new_ligand(CPF_ATOM_FRAGINDEX)];
-                ligand_names = append [ligand_names, swrite ['{} {}', new_ligand(CPF_ATOM_RESNAME), new_ligand(CPF_ATOM_RESINDEX)]];
+        elseif trigger == 'preset_MP2' then
+            update_ifie = 1;
+            WindowSetData [wkey, [
+                preset_HF: 0, preset_MP2: 1, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0,
+                component_ES: 1, component_EX: 1, component_CT_mix: 1, component_DI: 1]];
+        elseif trigger == 'preset_HF' then
+            update_ifie = 1;
+            WindowSetData [wkey, [
+                preset_HF: 1, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0,
+                component_ES: 1, component_EX: 1, component_CT_mix: 1, component_DI: 0]];
+        elseif trigger == 'preset_ES' then
+            update_ifie = 1;
+            WindowSetData [wkey, [
+                preset_HF: 0, preset_MP2: 0, preset_ES: 1, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0,
+                component_ES: 1, component_EX: 0, component_CT_mix: 0, component_DI: 0]];
+        elseif trigger == 'preset_EX' then
+            update_ifie = 1;
+            WindowSetData [wkey, [
+                preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 1, preset_CT_mix: 0, preset_DI: 0,
+                component_ES: 0, component_EX: 1, component_CT_mix: 0, component_DI: 0]];
+        elseif trigger == 'preset_CT_mix' then
+            update_ifie = 1;
+            WindowSetData [wkey, [
+                preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 1, preset_DI: 0,
+                component_ES: 0, component_EX: 0, component_CT_mix: 1, component_DI: 0]];
+        elseif trigger == 'preset_DI' then
+            update_ifie = 1;
+            WindowSetData [wkey, [
+                preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 1,
+                component_ES: 0, component_EX: 0, component_CT_mix: 0, component_DI: 1]];
+        elseif tok_keep [trigger, 10] == 'component_' then
+            update_ifie = 1;
+            if andE [values.component_ES, values.component_EX, values.component_CT_mix, not values.component_DI] then
+                WindowSetData [wkey, [preset_HF: 1, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0]];
+            elseif andE [values.component_ES, values.component_EX, values.component_CT_mix, values.component_DI] then
+                WindowSetData [wkey, [preset_HF: 0, preset_MP2: 1, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0]];
+            elseif andE [values.component_ES, not values.component_EX, not values.component_CT_mix, not values.component_DI] then
+                WindowSetData [wkey, [preset_HF: 0, preset_MP2: 0, preset_ES: 1, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0]];
+            elseif andE [not values.component_ES, values.component_EX, not values.component_CT_mix, not values.component_DI] then
+                WindowSetData [wkey, [preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 1, preset_CT_mix: 0, preset_DI: 0]];
+            elseif andE [not values.component_ES, not values.component_EX, values.component_CT_mix, not values.component_DI] then
+                WindowSetData [wkey, [preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 1, preset_DI: 0]];
+            elseif andE [not values.component_ES, not values.component_EX, not values.component_CT_mix, values.component_DI] then
+                WindowSetData [wkey, [preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 1]];
+            else
+                WindowSetData [wkey, [preset_HF: 0, preset_MP2: 0, preset_ES: 0, preset_EX: 0, preset_CT_mix: 0, preset_DI: 0]];
             endif
         endif
 
-        if orE[trigger == 'set_ligand', trigger == 'add_ligand'] then
-            ifie = IfieWith [GetIfie [cpf, ifie_cat], *ligands];
+        if update_ifie then
+            values = WindowValues wkey;
+            ifie = IfieWith [GetIfieComponent [cpf, [es: values.component_ES, ex:values.component_EX, ct: values.component_CT_mix, di: values.component_DI]], *ligands];
             ifie | GetNeighborFragmentMask [cpf, *ligands] = 0;
             range = GetRange ifie;
-            value = range;
         endif
 
         if value < 0 then
             value = 0.01;
         endif
         WindowSetData [wkey, [leftwheel: 0, rightwheel: 0]];
+        update_ifie = 0;
     endloop
     WindowDestroy wkey;
 endfunction
