@@ -1,5 +1,10 @@
 local function GetAjfDirectory []
-    return fcat[GetRC ['FMOE.base', '$HOME/moefiles/fmoe'], 'ajf'];
+    local ajf = GetRC ['FMOE.ajf_directory', '$HOME/moefiles/ajf'];
+    if ftype ajf <> 'dir' then
+        fmkdir ajf;
+        fcopy ['$HOME/moefiles/FMOE/ajf/sample.ajf', fcat[ajf, 'sample.ajf']];
+    endif
+    return ajf;
 endfunction
 
 local function G_DetachMarker [color, bda, baa]
