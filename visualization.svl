@@ -660,7 +660,9 @@ global function ShowVisualizationPanel [cpf, chains]
             SetColorBy [chains, values.color_atoms === 'All'];
 
         elseif trigger === 'listup_ifie' then
-            IfieList [cpf, *ligands];
+            if second task_fork [master: 'parent'] === 'child' then
+                IfieList [cpf, *ligands];
+            endif
         endif
 
         if orE [tok_keep [trigger, 7] === 'preset_', tok_keep [trigger, 10] === 'component_'] then
