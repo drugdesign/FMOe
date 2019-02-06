@@ -1,0 +1,11 @@
+function FMOEUtilsCommon t
+    if t === [] then
+        return [];
+    endif
+    if isflat t then
+        t = [t];
+    endif
+    local cand = app uniq t;
+    local freq = apt freq [cand, t];
+    return apt get [t, app x_max freq];
+endfunction

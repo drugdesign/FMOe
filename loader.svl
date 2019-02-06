@@ -1,4 +1,5 @@
 function main []
+    load '$HOME/moefiles/FMOE/utils.svl';
     load '$HOME/moefiles/FMOE/fragmentation.svl';
     load '$HOME/moefiles/FMOE/visualization.svl';
     ReadMenuFile '$HOME/moefiles/FMOE/menu';

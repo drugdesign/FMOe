@@ -2,6 +2,7 @@
 #set main 'FMOVisualization'
 
 function _Atoms;
+function FMOEUtilsCommon;
 
 const HARTREE = 627.509474;
 const RESOLUTION = 1000;
@@ -31,6 +32,7 @@ const CPF_DIMER_DI = 19;
 const CPF_DIMER_EX = 20;
 const CPF_DIMER_CT = 21;
 
+const CPF_FILE_PATH = 22;
 
 const STANDARD_RESIDUES = [
     'ALA', 'ARG', 'ASN', 'ASP', 'CYS',
@@ -41,8 +43,8 @@ const STANDARD_RESIDUES = [
 ];
 
 
-global function Cpf2SvlExePath []
-    local exe = tok_cat ['$HOME/moefiles/fmoe/bin/cpf2svl.', MOE_ARCH, '.exe'];
+function Cpf2SvlExePath []
+    local exe = tok_cat [GetRC ['fmoe.path', '$HOME/moefiles/fmoe'], '/bin/cpf2svl.', MOE_ARCH, '.exe'];
     if ftype exe === 'file' then
         return exe;
     endif
@@ -63,7 +65,9 @@ global function OpenCheckPointFile path
     endloop
     if not exe_exitcode pkey then
         Message [msg, []];
-        return freadb [svl_path, 'SVL', 50];
+        local cpf = freadb [svl_path, 'SVL', 50];
+        cpf[CPF_FILE_PATH] = path;
+        return cpf;
     else
         local line;
         for line in freadb [exe_stderr pkey, 'line', 50] loop
@@ -111,11 +115,15 @@ global function CreateMoleculeFromCPF cpf
     local pdb_file = WriteTempPDBFile cpf;
     local chains = ReadPDB pdb_file;
     fdelete pdb_file;
+    local prefixes = apt tok_drop [cName chains, tok_length cTag chains];
+    local name = ftail fbase cpf(CPF_FILE_PATH);
+    cSetTag [chains, name];
+    cSetName [chains, apt tok_cat [name, prefixes]];
     return chains;
 endfunction
 
 
-global function RGBToNumber [r, g, b]
+function RGBToNumber [r, g, b]
     return floor [r * 0xff] * 0x10000 + floor [g * 0xff] * 0x100 + floor [b * 0xff];
 endfunction
 
@@ -152,7 +160,7 @@ const COMPONENT_NAMES = [
 ];
 
 
-global function GetNeighborFragmentIndices [cpf, frags]
+function GetNeighborFragmentIndices [cpf, frags]
     local atom_mask = app orE eqE [cpf(CPF_ATOM_FRAG_INDICES), [frags]];
     local atom_indices = cpf(CPF_ATOM_INDICES) | atom_mask;
 
@@ -199,7 +207,7 @@ function InterpolateRGB [rgb0, rgb1, r]
 endfunction
 
 
-global function RGBColorScale [rgbmin, rgb0, rgbmax, v]
+function RGBColorScale [rgbmin, rgb0, rgbmax, v]
     local left_mask = v < 0;
     local left = InterpolateRGB [rgbmin, rgb0, 1 + (v | left_mask)];
     local right = InterpolateRGB [rgb0, rgbmax, v | not left_mask];
@@ -210,7 +218,7 @@ global function RGBColorScale [rgbmin, rgb0, rgbmax, v]
 endfunction
 
 
-global function LinearScale [range, v]
+function LinearScale [range, v]
     v = v / range;
     v | v > 1 = 1;
     v | v < -1 = -1;
@@ -229,16 +237,6 @@ function Strip t
 endfunction
 
 
-function Common t
-    if isflat t then
-        t = [t];
-    endif
-    local cand = app uniq t;
-    local freq = apt freq [cand, t];
-    return apt get [t, app x_max freq];
-endfunction
-
-
 function GetFragAtomMasks cpf
     return eqE [[cpf(CPF_ATOM_FRAG_INDICES)], igen cpf(CPF_NUM_FRAGS)];
 endfunction
@@ -252,19 +250,19 @@ function GetFragAtomMasksWithoutCO cpf
 endfunction
 
 
-global function GetFragNames cpf
+function GetFragNames cpf
     local frag_masks = GetFragAtomMasksWithoutCO cpf;
     local names = apt mget [[cpf(CPF_ATOM_RES_NAMES)], frag_masks];
-    return Common names;
+    return FMOEUtilsCommon names;
 endfunction
 
 
-global function GetFragAtomKeys [cpf, chains]
+function GetFragAtomKeys [cpf, chains]
     return apt mget [[cat cAtoms chains], GetFragAtomMasks cpf];
 endfunction
 
 
-global function GetFragResKeys [cpf, chains]
+function GetFragResKeys [cpf, chains]
     local frag_masks = GetFragAtomMasksWithoutCO cpf;
     return app uniq apt mget [[aResidue cat cAtoms chains], frag_masks];
 endfunction
@@ -347,14 +345,14 @@ endfunction
 
 
 const MAIN_PANEL = [
-    name: 'fmo_visualization',
-    title: 'FMO Visualization',
-    windowName: 'FMOVisualization',
+    name: 'fmoe_visualization',
+    title: 'FMOE Visualization',
+    windowName: 'FMOEVisualization',
     Vbox: [
         extendH: 1,
         Hbox: [
             extendH: 1,
-            Label: [text: 'Ligand:', font: 'mediumFixedBold'],
+            Label: [text: 'Ligand:   ', font: 'mediumFixedBold'],
             Button: [name: 'set_ligand', onTrigger: 'return'],
             Button: [name: 'add_ligand', onTrigger: 'return', text: '+'],
             Color: [name: 'ligandrgb', onTrigger: 'return'],
@@ -363,24 +361,25 @@ const MAIN_PANEL = [
         ],
         Hbox: [
             extendH: 1,
-            Label: [text: 'Energy:', font: 'mediumFixedBold'],
+            Label: [text: 'Preset:   ', font: 'mediumFixedBold'],
             Checkbox: [name: 'preset_MP2', text: 'MP2', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
             Checkbox: [name: 'preset_HF', text: 'HF', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
             Checkbox: [name: 'preset_ES', text: 'ES', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
             Checkbox: [name: 'preset_EX', text: 'EX', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
             Checkbox: [name: 'preset_CT', text: 'CT+mix', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
-            Checkbox: [name: 'preset_DI', text: 'DI', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
-            Label: [minWidth: 2],
-            Label: [text: '(', font: 'largeBold'],
-            Checkbox: [name: 'component_ES', text: 'ES', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
-            Checkbox: [name: 'component_EX', text: 'EX', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
-            Checkbox: [name: 'component_CT', text: 'CT+mix', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
-            Checkbox: [name: 'component_DI', text: 'DI', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
-            Label: [text: ')', font: 'largeBold']
+            Checkbox: [name: 'preset_DI', text: 'DI', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4]
         ],
         Hbox: [
             extendH: 1,
-            Label: [text: 'Color: ', font: 'mediumFixedBold'],
+            Label: [text: 'Component:', font: 'mediumFixedBold'],
+            Checkbox: [name: 'component_ES', text: 'ES', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'component_EX', text: 'EX', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'component_CT', text: 'CT+mix', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4],
+            Checkbox: [name: 'component_DI', text: 'DI', onTrigger: 'return', checkboxStyle: 'radioButton', minWidth: 4]
+        ],
+        Hbox: [
+            extendH: 1,
+            Label: [text: 'Color:    ', font: 'mediumFixedBold'],
             Radio: [name: 'color_atoms', type: 'char', text: ['Carbon', 'All'], onTrigger: 'return', minWidth: 4]
         ],
         Separator: [
@@ -422,7 +421,7 @@ function PickLigandTask []
 endfunction
 
 
-global function FormatLigands [names, indices]
+function FormatLigands [names, indices]
     return tok_cat droplast cat tr [apt twrite ['{}{}', names[indices], indices], ','];
 endfunction
 
@@ -463,10 +462,12 @@ function EnergyInspector [cpf, chains, ifies]
             endif
         else
             before_frags = [];
+            Message [msg_key, ''];
         endif
 
-        sleep 0.5;
+        sleep 0.2;
     endloop
+    Message [msg_key, []];
 endfunction
 
 
@@ -498,7 +499,7 @@ const IFIE_LIST = [
 ];
 
 
-global function IfieList [cpf, frags]
+function IfieList [cpf, frags]
     local wkey = WindowCreate IFIE_LIST;
     WindowShow wkey;
 
@@ -536,7 +537,7 @@ const DEFAULT_RGB_0 = 0xffffff;
 const DEFAULT_RGB_MAX = 0x0000ff;
 
 
-global function ShowVisualizationPanel [cpf, chains]
+function ShowVisualizationPanel [cpf, chains]
     local wkey = WindowCreate MAIN_PANEL;
 
     local ligands = dvar_open[];
@@ -551,7 +552,7 @@ global function ShowVisualizationPanel [cpf, chains]
 
     *ligands = uniq cpf(CPF_ATOM_FRAG_INDICES)[indexof [ligand_atom_keys, cat cAtoms chains]];
 
-    WindowSetAttr [wkey, [fmo_visualization: [title: twrite ['FMO Visualization - {}', uniq cName chains]]]];
+    WindowSetAttr [wkey, [fmoe_visualization: [title: twrite ['FMO Visualization - {}', uniq cName chains]]]];
 
     *ifies = SetRGBByIfie [cpf, chains, *ligands, [
         rgbmin: DEFAULT_RGB_MIN,
@@ -725,7 +726,7 @@ global function ShowVisualizationPanel [cpf, chains]
 endfunction
 
 
-global function FMOVisualization path
+global function FMOEVisualizationGUI path
     if path === [] then
         path = FilePrompt [title: 'open cpf file', mode: 'open', filter: '*.cpf'];
     else

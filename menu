@@ -1,8 +1,8 @@
 MENU APPEND "RightButtonBar"
     SEPARATOR
     "FMOE" MENU "FMOE"
-        "Fragmentation" exec "FMOFragmentation[]"
-        "Visualization" exec "FMOVisualization[]"
+        "Fragmentation" exec "FMOEFragmentationGUI[]"
+        "Visualization" exec "FMOEVisualizationGUI[]"
     ENDMENU
 ENDMENU
 
