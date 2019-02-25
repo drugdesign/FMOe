@@ -1,6 +1,7 @@
 &CNTRL
   Method='MP2'
   Memory=8000
+  ReadGeom='{{{BASENAME}}}.pdb'
   WriteGeom='{{{BASENAME}}}.cpf'
   Charge={{{TOTAL_CHARGE}}}
 /

@@ -695,6 +695,55 @@ local function FormatAbinitMpFragment [atoms, fragments, detached_bonds]
 endfunction
 
 
+local function AbinitMpFilePrompt []
+    local prefix;
+    loop
+        prefix = FilePrompt [mode: 'saveAs'];
+        if prefix === [] then
+            return [];
+        endif
+
+        local fnpdb = tok_cat [prefix, '.pdb'];
+        local fnajf = tok_cat [prefix, '.ajf'];
+        local ftpdb = ftype fnpdb;
+        local ftajf = ftype fnajf;
+        if ftpdb == 'dir' then
+            Warning twrite ['{} is directory', fnpdb];
+            continue;
+        endif
+        if ftpdb == 'other' then
+            Warning twrite ['file type of {} is other', fnpdb];
+            continue;
+        endif
+        if ftajf == 'dir' then
+            Warning twrite ['{} is directory', fnajf];
+            continue;
+        endif
+        if ftajf == 'other' then
+            Warning twrite ['file type of {} is other', fnajf];
+            continue;
+        endif
+        if ftpdb == 'file' and ftajf == 'file' then
+            if not YesNo twrite ['{} and {} is already exists. overwrite?', fnpdb, fnajf] then
+                continue;
+            endif
+        elseif ftajf == 'file' then
+
+        elseif ftpdb == 'file' then
+            if not YesNo twrite ['{} is already exists. overwrite?', fnpdb] then
+                continue;
+            endif
+        elseif ftajf == 'file' then
+            if not YesNo twrite ['{} is already exists. overwrite?', fnajf] then
+                continue;
+            endif
+        endif
+        break;
+    endloop
+    return prefix;
+endfunction
+
+
 global function FMOEFragmentationGUI[]
     local quit = dvar_open [];
     dvar_lock quit;
@@ -781,9 +830,11 @@ global function FMOEFragmentationGUI[]
             if fext values.select_template === 'ajf' then
                 local [[ok, _], state] = task_call [#AlertAtomDialog, cat cAtoms chains, [master: 'parent']];
                 if state === '' and ok then
-                    local path_prefix = FilePrompt [mode: 'saveAs'];
+                    local path_prefix = AbinitMpFilePrompt [];
                     if not (path_prefix === []) then
-                        local w_atoms = fwrite_abinitmp_pdb [fopenw tok_cat [path_prefix, '.pdb'], chains];
+                        local pdb_path = fopenw tok_cat [path_prefix, '.pdb'];
+                        local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
+                        fclose pdb_path;
                         EnsureTemplate [
                             TEMPLATE_PATH: ffullname fcat [template_base, values.select_template],
                             OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf'],
