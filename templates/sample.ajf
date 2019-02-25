@@ -1,15 +1,17 @@
 &CNTRL
   Method='MP2'
   Memory=8000
-  WriteGeom='output.cpf'
+  WriteGeom='{{{BASENAME}}}.cpf'
+  Charge={{{TOTAL_CHARGE}}}
 /
 &FMOCNTRL
   AutoFrag='OFF'
+  NF={{{NUM_FRAGS}}}
 /
 &SCF
 /
 &BASIS
-  BasisSet='6-31G*'
+  BasisSet='{{{BASIS_SET}}}'
 /
 &OPTCNTRL
 /
@@ -61,6 +63,7 @@
 /
 &CCPT
 /
+{{{ABINITMP_FRAGMENT}}}
 &MDCNTRL
 /
 &VEL

@@ -1,6 +1,6 @@
-SRC = main.go write_cpf.go cpf/cpf.go svlwriter/svlwriter.go
+SRC = main.go
 DST := ../bin
-NAME = cpf2svl
+NAME = fill_template
 
 .DEFAULT_GOAL: all
 

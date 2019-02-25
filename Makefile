@@ -1,4 +1,4 @@
-PROJECTS = cpf2svl
+PROJECTS = cpf2svl fill_template
 CLEAN = $(addsuffix _clean, $(PROJECTS))
 
 .PHONY: all $(PROJECTS)

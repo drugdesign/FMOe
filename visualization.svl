@@ -2,7 +2,6 @@
 #set main 'FMOVisualization'
 
 function _Atoms;
-function FMOEUtilsCommon;
 
 const HARTREE = 627.509474;
 const RESOLUTION = 1000;
@@ -43,7 +42,7 @@ const STANDARD_RESIDUES = [
 ];
 
 
-function Cpf2SvlExePath []
+local function Cpf2SvlExePath []
     local exe = tok_cat [GetRC ['fmoe.path', '$HOME/moefiles/fmoe'], '/bin/cpf2svl.', MOE_ARCH, '.exe'];
     if ftype exe === 'file' then
         return exe;
@@ -77,7 +76,7 @@ global function OpenCheckPointFile path
 endfunction
 
 
-function IsStandardResidue res
+local function IsStandardResidue res
     return app orE eqE [[STANDARD_RESIDUES], res];
 endfunction
 
@@ -102,7 +101,7 @@ global function AbinitMpCheckPointFileToPDBFile [cpf, fnum]
 endfunction
 
 
-function WriteTempPDBFile cpf
+local function WriteTempPDBFile cpf
     local pdb_path = fnametemp '$TMP/fmoe_visualization_*.pdb';
     local pdb_file = fopenw pdb_path;
     AbinitMpCheckPointFileToPDBFile [cpf, pdb_file];
@@ -123,12 +122,12 @@ global function CreateMoleculeFromCPF cpf
 endfunction
 
 
-function RGBToNumber [r, g, b]
+local function RGBToNumber [r, g, b]
     return floor [r * 0xff] * 0x10000 + floor [g * 0xff] * 0x100 + floor [b * 0xff];
 endfunction
 
 
-function NumberToRGB n
+local function NumberToRGB n
     return [
         floor (n / 0x10000) / 0xff,
         bitand [floor (n / 0x100), 0xff] / 0xff,
@@ -137,7 +136,7 @@ function NumberToRGB n
 endfunction
 
 
-function DimerIndex [self, other]
+local function DimerIndex [self, other]
     local mins = apt min [self, other];
     local maxs = apt max [self, other];
 
@@ -147,7 +146,7 @@ function DimerIndex [self, other]
 endfunction
 
 
-function DimerLengthToNumFragments l
+local function DimerLengthToNumFragments l
     return (sqrt [8 * l + 1] + 1) / 2;
 endfunction
 
@@ -160,7 +159,7 @@ const COMPONENT_NAMES = [
 ];
 
 
-function GetNeighborFragmentIndices [cpf, frags]
+local function GetNeighborFragmentIndices [cpf, frags]
     local atom_mask = app orE eqE [cpf(CPF_ATOM_FRAG_INDICES), [frags]];
     local atom_indices = cpf(CPF_ATOM_INDICES) | atom_mask;
 
@@ -196,7 +195,7 @@ global function SumIfie [cpf, frags, components]
 endfunction
 
 
-function InterpolateRGB [rgb0, rgb1, r]
+local function InterpolateRGB [rgb0, rgb1, r]
     local [r0, g0, b0] = rgb0;
     local [r1, g1, b1] = rgb1;
     local dr = r1 - r0;
@@ -207,7 +206,7 @@ function InterpolateRGB [rgb0, rgb1, r]
 endfunction
 
 
-function RGBColorScale [rgbmin, rgb0, rgbmax, v]
+local function RGBColorScale [rgbmin, rgb0, rgbmax, v]
     local left_mask = v < 0;
     local left = InterpolateRGB [rgbmin, rgb0, 1 + (v | left_mask)];
     local right = InterpolateRGB [rgb0, rgbmax, v | not left_mask];
@@ -218,7 +217,7 @@ function RGBColorScale [rgbmin, rgb0, rgbmax, v]
 endfunction
 
 
-function LinearScale [range, v]
+local function LinearScale [range, v]
     v = v / range;
     v | v > 1 = 1;
     v | v < -1 = -1;
@@ -226,23 +225,23 @@ function LinearScale [range, v]
 endfunction
 
 
-function GetRange ifiesum
+local function GetRange ifiesum
     return max [abs max ifiesum, abs min ifiesum, 1e-10];
 endfunction
 
 
-function Strip t
+local function Strip t
     local s = app string t;
     return app token apt mget [s,  s <> " "];
 endfunction
 
 
-function GetFragAtomMasks cpf
+local function GetFragAtomMasks cpf
     return eqE [[cpf(CPF_ATOM_FRAG_INDICES)], igen cpf(CPF_NUM_FRAGS)];
 endfunction
 
 
-function GetFragAtomMasksWithoutCO cpf
+local function GetFragAtomMasksWithoutCO cpf
     return andE [
         GetFragAtomMasks cpf,
         [not app orE eqE [Strip cpf(CPF_ATOM_TYPES), [['C', 'O']]]]
@@ -250,25 +249,39 @@ function GetFragAtomMasksWithoutCO cpf
 endfunction
 
 
-function GetFragNames cpf
-    local frag_masks = GetFragAtomMasksWithoutCO cpf;
-    local names = apt mget [[cpf(CPF_ATOM_RES_NAMES)], frag_masks];
-    return FMOEUtilsCommon names;
+local function Common t
+    if t === [] then
+        return [];
+    endif
+    if isflat t then
+        t = [t];
+    endif
+    local cand = app uniq t;
+    local freq = apt freq [cand, t];
+    return apt get [cand, app x_max freq];
 endfunction
 
 
-function GetFragAtomKeys [cpf, chains]
+
+local function GetFragNames cpf
+    local frag_masks = GetFragAtomMasksWithoutCO cpf;
+    local names = apt mget [[cpf(CPF_ATOM_RES_NAMES)], frag_masks];
+    return Common names;
+endfunction
+
+
+local function GetFragAtomKeys [cpf, chains]
     return apt mget [[cat cAtoms chains], GetFragAtomMasks cpf];
 endfunction
 
 
-function GetFragResKeys [cpf, chains]
+local function GetFragResKeys [cpf, chains]
     local frag_masks = GetFragAtomMasksWithoutCO cpf;
     return app uniq apt mget [[aResidue cat cAtoms chains], frag_masks];
 endfunction
 
 
-function _SetRGBByIfie [frag_atoms, frag_residues, ifiesum, options]
+local function _SetRGBByIfie [frag_atoms, frag_residues, ifiesum, options]
     local scaled = LinearScale [options.range, ifiesum];
     local colors = app RGBToNumber RGBColorScale [options.rgbmin, options.rgb0, options.rgbmax, scaled];
     colors[options.ligand_indices] = options.ligandrgb;
@@ -280,7 +293,7 @@ function _SetRGBByIfie [frag_atoms, frag_residues, ifiesum, options]
 endfunction
 
 
-function SetColorBy [chains, colorall]
+local function SetColorBy [chains, colorall]
     local atom_keys = cat cAtoms chains;
     rSetRibbonColorBy [cResidues chains, 'rgb'];
     if colorall then
@@ -413,7 +426,7 @@ const LIGAND_PICKER = [
 ];
 
 
-function PickLigandTask []
+local function PickLigandTask []
     local wkey = WindowCreate LIGAND_PICKER;
     local result = (first WindowWait wkey).atom;
     WindowDestroy wkey;
@@ -421,12 +434,12 @@ function PickLigandTask []
 endfunction
 
 
-function FormatLigands [names, indices]
+local function FormatLigands [names, indices]
     return tok_cat droplast cat tr [apt twrite ['{}{}', names[indices], indices], ','];
 endfunction
 
 
-function EnergyInspector [cpf, chains, ifies]
+local function EnergyInspector [cpf, chains, ifies]
     local msg_key = Message [0, ''];
     local frag_names = GetFragNames cpf;
     local before_frags = [];
@@ -499,7 +512,7 @@ const IFIE_LIST = [
 ];
 
 
-function IfieList [cpf, frags]
+local function IfieList [cpf, frags]
     local wkey = WindowCreate IFIE_LIST;
     WindowShow wkey;
 
@@ -537,7 +550,7 @@ const DEFAULT_RGB_0 = 0xffffff;
 const DEFAULT_RGB_MAX = 0x0000ff;
 
 
-function ShowVisualizationPanel [cpf, chains]
+local function ShowVisualizationPanel [cpf, chains]
     local wkey = WindowCreate MAIN_PANEL;
 
     local ligands = dvar_open[];
