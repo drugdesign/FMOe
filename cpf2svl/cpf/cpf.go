@@ -16,8 +16,11 @@ type Version int
 const (
 	// Ver7_2 is Ver.7.2 CPF
 	Ver7_2 Version = 72
+	// Ver7_0 is Ver.7.0 CPF
+	Ver7_0 = 70
 	// Ver4_201MIZUHO is Ver.4.201 (MIZUHO)
 	Ver4_201MIZUHO = 4201
+	//
 )
 
 // Cpf is CPF file
@@ -90,6 +93,8 @@ func (cpf *cpfParser) parseVersion() error {
 
 	if strings.HasPrefix(line, "CPF Ver.7.2") {
 		cpf.result.Version = Ver7_2
+	} else if strings.HasPrefix(line, "CPF Ver.7.0") {
+		cpf.result.Version = Ver7_0
 	} else if strings.HasPrefix(line, "CPF Ver.4.201 (MIZUHO)") {
 		cpf.result.Version = Ver4_201MIZUHO
 	} else {
@@ -325,7 +330,7 @@ func (cpf *cpfParser) parseDimers(numDimers int) error {
 
 	var exStart, ctStart int
 	fieldWidth := 24
-	if cpf.result.Version == Ver4_201MIZUHO {
+	if cpf.result.Version == Ver4_201MIZUHO || cpf.result.Version == Ver7_0 {
 		exStart = 288
 		ctStart = 312
 	} else if cpf.result.Version == Ver7_2 {

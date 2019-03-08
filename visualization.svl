@@ -752,6 +752,10 @@ global function FMOEVisualizationGUI path
 
     local cpf = OpenCheckPointFile path;
 
+    if cpf === [] then
+        return [];
+    endif
+
     local chains = CreateMoleculeFromCPF cpf;
     ShowVisualizationPanel [cpf, chains];
 endfunction
