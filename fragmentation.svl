@@ -307,7 +307,7 @@ local function FormatFragments [basisset, fragments, detached, attached]
         '{}\t{}\t{}\t{}\t{}\t{}\t{}',
         igen length fragments, apt tok_cat [res, resi], app length fragments,
         GetNumberOfFunctions [basisset, apt cat [fragments, attached]],
-        nA, nD, app add aFCharge fragments + nD - nA
+        nD, nA, app add aFCharge fragments + nD - nA
     ];
 endfunction
 
@@ -582,8 +582,6 @@ local function AlertAtomDialog atoms
                 return [0, alerts];
             endif
 
-        else
-            print [values, trigger];
         endif
     endloop
 
@@ -679,11 +677,13 @@ local function FormatAbinitMpFragment [atoms, fragments, detached_bonds]
     local [bda, baa] = tr StripBondExtra detached_bonds;
     local detached = AssignAtomsToFragments [bda, fragments];
     local attached = AssignAtomsToFragments [baa, fragments];
-    local atom_indices = apt indexof [fragments, [atoms]];
-    local ibda = indexof [bda, atoms];
-    local ibaa = indexof [baa, atoms];
-    print length detached_bonds;
-    print length ibda;
+    local atom_indices = app sort apt indexof [fragments, [atoms]];
+
+    local rbaa = cat attached | cat (attached <> 0);
+    local [rbda, _] = tr StripBondExtra detached_bonds [indexof [rbaa, baa]];
+
+    local ibda = indexof [rbda, atoms];
+    local ibaa = indexof [rbaa, atoms];
 
     return twrite ['&FRAGMENT\n{}\n{}\n{}\n{}\n{}\n/',
         AbinitMpFragmentFormat app length fragments,
@@ -850,9 +850,6 @@ global function FMOEFragmentationGUI[]
                 Warning twrite ['unknown template extension: {}', fext values.select_template];
             endif
 
-        else
-            print trigger;
-            print values;
         endif
 
     endloop
