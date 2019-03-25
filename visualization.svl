@@ -449,6 +449,7 @@ local function EnergyInspector [cpf, chains, ifies]
             return;
         endif
         local selected_indices = indexof [SelectedAtoms [], cat cAtoms chains];
+        selected_indices = selected_indices | selected_indices <> 0;
 
         if length selected_indices > 0 then
             local frags = [];
