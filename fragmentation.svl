@@ -88,7 +88,6 @@ endfunction
 
 
 global function PartitionAtoms [atoms, bonds]
-    atoms = sort atoms;
     local nbr = BondGraph atoms;
     local [bda, baa] = tr StripBondExtra bonds;
     local ibonds = tr [BatchBinarySearch [bda, atoms], BatchBinarySearch [baa, atoms]];
