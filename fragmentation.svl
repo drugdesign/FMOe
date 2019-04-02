@@ -88,12 +88,14 @@ endfunction
 
 
 global function PartitionAtoms [atoms, bonds]
-    local nbr = BondGraph atoms;
+    local satoms = sort atoms;
+    local nbr = BondGraph satoms;
     local [bda, baa] = tr StripBondExtra bonds;
-    local ibonds = tr [BatchBinarySearch [bda, atoms], BatchBinarySearch [baa, atoms]];
+    local ibonds = tr [BatchBinarySearch [bda, satoms], BatchBinarySearch [baa, satoms]];
     ibonds = ibonds | app andE neE [ibonds, 0];
     nbr = graph_ecutE [nbr, tr ibonds];
-    return apt get [[atoms], graph_ccomponent_list nbr];
+    local unsorted = apt get [[satoms], graph_ccomponent_list nbr];
+    return unsorted[x_sort app min aNumber unsorted];
 endfunction
 
 
