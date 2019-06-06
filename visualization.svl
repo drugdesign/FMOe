@@ -366,8 +366,8 @@ const MAIN_PANEL = [
         Hbox: [
             extendH: 1,
             Label: [text: 'Ligand:   ', font: 'mediumFixedBold'],
-            Button: [name: 'set_ligand', onTrigger: 'return'],
-            Button: [name: 'add_ligand', onTrigger: 'return', text: '+'],
+            Label: [name: 'ligand_name'],
+            Button: [text: 'set', name: 'set_ligand', onTrigger: 'return'],
             Color: [name: 'ligandrgb', onTrigger: 'return'],
             Label: [extendH: 1],
             Button: [text: 'list', name: 'listup_ifie']
@@ -435,6 +435,7 @@ endfunction
 
 
 local function FormatLigands [names, indices]
+    indices = keep [indices, 10];
     return tok_cat droplast cat tr [apt twrite ['{}{}', names[indices], indices], ','];
 endfunction
 
@@ -585,7 +586,7 @@ local function ShowVisualizationPanel [cpf, chains]
     local range = GetRange ifiesum;
     local bound = range;
 
-    WindowSetAttr [wkey, [set_ligand: [text: FormatLigands [frag_names, *ligands]]]];
+    WindowSetAttr [wkey, [ligand_name: [text: FormatLigands [frag_names, *ligands]]]];
 
     WindowSetData [wkey, [
         preset_MP2: 1,
@@ -633,7 +634,7 @@ local function ShowVisualizationPanel [cpf, chains]
             new_range = -values.energymin;
             update_range = 1;
         elseif trigger === 'energymax' then
-            new_range = -values.energymax;
+            new_range = values.energymax;
             update_range = 1;
 
         elseif trigger === 'preset_MP2' then
@@ -649,7 +650,23 @@ local function ShowVisualizationPanel [cpf, chains]
         elseif trigger === 'preset_CT' then
             WindowSetData [wkey, [component_ES: 0, component_DI: 0, component_EX: 0, component_CT: 1]];
 
-        elseif orE [trigger === 'set_ligand', trigger === 'add_ligand'] then
+        elseif trigger === 'set_ligand' then
+            local atom_keys = SelectedAtoms [];
+            if not (atom_keys === []) then
+                local atom_key, picked_fragments = [];
+                for atom_key in atom_keys loop
+                    local atom_frag_idx = indexof [1, app orE eqE [frag_atoms, atom_key]];
+                    if atom_frag_idx <> 0 then
+                        picked_fragments = cat [picked_fragments, atom_frag_idx];
+                    endif
+                endloop
+                *ligands = uniq picked_fragments;
+                *ifies = SumIfie [cpf, *ligands, ['ES', 'EX', 'CT', 'DI']];
+                WindowSetAttr [wkey, [ligand_name: [text: FormatLigands [frag_names, *ligands]]]];
+                update_ifiesum = 1;
+                update_colors = 1;
+            endif
+            /*
             local [atom_key, return_code] = task_call [#PickLigandTask, [], [master: 'parent']];
             if return_code === '' then
                 local picked_fragment = indexof [1, app orE eqE [frag_atoms, atom_key]];
@@ -659,10 +676,11 @@ local function ShowVisualizationPanel [cpf, chains]
                     *ligands = cat [*ligands, picked_fragment];
                 endif
                 *ifies = SumIfie [cpf, *ligands, ['ES', 'EX', 'CT', 'DI']];
-                WindowSetAttr [wkey, [set_ligand: [text: FormatLigands [frag_names, *ligands]]]];
+                WindowSetAttr [wkey, [ligand_name: [text: FormatLigands [frag_names, *ligands]]]];
                 update_ifiesum = 1;
                 update_colors = 1;
             endif
+            */
 
         elseif trigger === 'reset_energy' then
             new_range = GetRange ifiesum;
