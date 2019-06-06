@@ -16,8 +16,6 @@ type Version int
 const (
 	// Ver7_2 is Ver.7.2 CPF
 	Ver7_2 Version = 72
-	// Ver7_0 is Ver.7.0 CPF
-	Ver7_0 = 70
 	// Ver4_201MIZUHO is Ver.4.201 (MIZUHO)
 	Ver4_201MIZUHO = 4201
 	//
@@ -93,8 +91,6 @@ func (cpf *cpfParser) parseVersion() error {
 
 	if strings.HasPrefix(line, "CPF Ver.7.2") {
 		cpf.result.Version = Ver7_2
-	} else if strings.HasPrefix(line, "CPF Ver.7.0") {
-		cpf.result.Version = Ver7_0
 	} else if strings.HasPrefix(line, "CPF Ver.4.201 (MIZUHO)") {
 		cpf.result.Version = Ver4_201MIZUHO
 	} else {
@@ -227,6 +223,7 @@ func (cpf *cpfParser) parseFragBondNumbers() error {
 	cpf.result.FragBondNumbers = make([]int, 0, cpf.result.NumFrags)
 
 	lines := cpf.result.NumFrags / 16
+	rests := cpf.result.NumFrags % 16
 	for l := 0; l < lines; l++ {
 		line, err := cpf.scan()
 		if err != nil {
@@ -243,11 +240,15 @@ func (cpf *cpfParser) parseFragBondNumbers() error {
 		}
 	}
 
+	if rests == 0 {
+		return nil
+	}
+
 	line, err := cpf.scan()
 	if err != nil {
 		return err
 	}
-	for j := 0; j < cpf.result.NumFrags%16; j++ {
+	for j := 0; j < rests; j++ {
 		if v, err := intField(line, 0, 5); err == nil {
 			cpf.result.FragBondNumbers = append(cpf.result.FragBondNumbers, v)
 			line = line[5:]
@@ -330,7 +331,7 @@ func (cpf *cpfParser) parseDimers(numDimers int) error {
 
 	var exStart, ctStart int
 	fieldWidth := 24
-	if cpf.result.Version == Ver4_201MIZUHO || cpf.result.Version == Ver7_0 {
+	if cpf.result.Version == Ver4_201MIZUHO {
 		exStart = 288
 		ctStart = 312
 	} else if cpf.result.Version == Ver7_2 {
