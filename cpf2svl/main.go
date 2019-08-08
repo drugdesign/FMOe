@@ -1,9 +1,12 @@
 package main
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 
 	flags "github.com/jessevdk/go-flags"
 	"github.com/philopon/fmoe/cpf2svl/cpf"
@@ -33,17 +36,28 @@ func mainProcess() (int, error) {
 		return optionParseFailed, fmt.Errorf("the required flag `-o, --output' was not specified")
 	}
 
-	var input *os.File
+	var file *os.File
 	if opts.CpfPath == "" {
-		input = os.Stdin
+		file = os.Stdin
 	} else {
 		var err error
-		input, err = os.Open(opts.CpfPath)
+		file, err = os.Open(opts.CpfPath)
 		if err != nil {
 			return ioError, err
 		}
 	}
-	defer input.Close()
+	defer file.Close()
+
+	var input io.Reader
+	if filepath.Ext(opts.CpfPath) == ".gz" {
+		var err error
+		input, err = gzip.NewReader(file)
+		if err != nil {
+			return ioError, err
+		}
+	} else {
+		input = file
+	}
 
 	cpf, err := cpf.ParseCpf(input)
 	if err != nil {

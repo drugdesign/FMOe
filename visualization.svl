@@ -769,7 +769,7 @@ endfunction
 
 global function FMOEVisualizationGUI path
     if path === [] then
-        path = FilePrompt [title: 'open cpf file', mode: 'open', filter: '*.cpf'];
+        path = FilePrompt [title: 'open cpf file', mode: 'open', filter: ['*.cpf', '*.cpf.gz']];
     else
         path = fabsname path;
     endif
