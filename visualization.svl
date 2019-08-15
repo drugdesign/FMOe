@@ -18,20 +18,26 @@ const CPF_ATOM_FRAG_INDICES = 8;
 const CPF_ATOM_X = 9;
 const CPF_ATOM_Y = 10;
 const CPF_ATOM_Z = 11;
-const CPF_ATOM_CHAIN_ID = 12;
-const CPF_ATOM_INS_CODE = 13;
+const CPF_ATOM_HF_Mulliken = 12;
+const CPF_ATOM_MP2_Mulliken = 13;
+const CPF_ATOM_HF_NBO = 14;
+const CPF_ATOM_MP2_NBO = 15;
+const CPF_ATOM_HF_RESP = 16;
+const CPF_ATOM_MP2_RESP = 17;
+const CPF_ATOM_CHAIN_ID = 18;
+const CPF_ATOM_INS_CODE = 19;
 
-const CPF_FRAG_BOND_NUMBERS = 14;
-const CPF_FRAG_BOND_SELFS = 15;
-const CPF_FRAG_BOND_OTHERS = 16;
+const CPF_FRAG_BOND_NUMBERS = 20;
+const CPF_FRAG_BOND_SELFS = 21;
+const CPF_FRAG_BOND_OTHERS = 22;
 
-const CPF_DIMER_DISTANCES = 17;
-const CPF_DIMER_ES = 18;
-const CPF_DIMER_DI = 19;
-const CPF_DIMER_EX = 20;
-const CPF_DIMER_CT = 21;
+const CPF_DIMER_DISTANCES = 23;
+const CPF_DIMER_ES = 24;
+const CPF_DIMER_DI = 25;
+const CPF_DIMER_EX = 26;
+const CPF_DIMER_CT = 27;
 
-const CPF_FILE_PATH = 22;
+const CPF_FILE_PATH = 28;
 
 const STANDARD_RESIDUES = [
     'ALA', 'ARG', 'ASN', 'ASP', 'CYS',
@@ -92,10 +98,11 @@ global function AbinitMpCheckPointFileToPDBFile [cpf, fnum]
 
         fwrite [
             fnum,
-            '{t:}{n:5} {t:4} {t:3} {t:1}{n:4}{t:1}   {n:8.3f}{n:8.3f}{n:8.3f}  1.00  1.00          {t:2}\n',
+            '{t:}{n:5} {t:4} {t:3} {t:1}{n:4}{t:1}   {n:8.3f}{n:8.3f}{n:8.3f}  1.00{n:6.2f}          {t:2}\n',
             header, cpf(CPF_ATOM_INDICES)(i), cpf(CPF_ATOM_TYPES)(i), cpf(CPF_ATOM_RES_NAMES)(i),
             cpf(CPF_ATOM_CHAIN_ID)(i), cpf(CPF_ATOM_RES_INDICES)(i), cpf(CPF_ATOM_INS_CODE)(i),
-            cpf(CPF_ATOM_X)(i), cpf(CPF_ATOM_Y)(i), cpf(CPF_ATOM_Z)(i), cpf(CPF_ATOM_ELEMENTS)(i)
+            cpf(CPF_ATOM_X)(i), cpf(CPF_ATOM_Y)(i), cpf(CPF_ATOM_Z)(i), cpf(CPF_ATOM_HF_Mulliken)(i),
+            cpf(CPF_ATOM_ELEMENTS)(i)
         ];
     endloop
 endfunction

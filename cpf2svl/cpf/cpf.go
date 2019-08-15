@@ -36,6 +36,12 @@ type Cpf struct {
 	AtomX           []float64
 	AtomY           []float64
 	AtomZ           []float64
+	AtomHFMulliken  []float64
+	AtomMP2Mulliken []float64
+	AtomHFNBO       []float64
+	AtomMP2NBO      []float64
+	AtomHFRESP      []float64
+	AtomMP2RESP     []float64
 	AtomChainID     []string
 	AtomInsCode     []string
 
@@ -130,6 +136,12 @@ func (cpf *cpfParser) parseAtoms() error {
 	cpf.result.AtomX = make([]float64, cpf.result.NumAtoms)
 	cpf.result.AtomY = make([]float64, cpf.result.NumAtoms)
 	cpf.result.AtomZ = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomHFMulliken = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomMP2Mulliken = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomHFNBO = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomMP2NBO = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomHFRESP = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomMP2RESP = make([]float64, cpf.result.NumAtoms)
 	cpf.result.AtomChainID = make([]string, cpf.result.NumAtoms)
 	cpf.result.AtomInsCode = make([]string, cpf.result.NumAtoms)
 
@@ -180,6 +192,36 @@ func (cpf *cpfParser) parseAtoms() error {
 		}
 		if v, err := floatField(line, 52, 64); err == nil {
 			cpf.result.AtomZ[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 64, 76); err == nil {
+			cpf.result.AtomHFMulliken[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 76, 88); err == nil {
+			cpf.result.AtomMP2Mulliken[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 88, 100); err == nil {
+			cpf.result.AtomHFNBO[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 100, 112); err == nil {
+			cpf.result.AtomMP2NBO[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 112, 124); err == nil {
+			cpf.result.AtomHFRESP[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 124, 136); err == nil {
+			cpf.result.AtomMP2RESP[i] = v
 		} else {
 			return err
 		}

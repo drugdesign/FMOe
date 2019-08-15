@@ -40,6 +40,24 @@ func writeCpf(writer *svlwriter.SVLWriter, cpf *cpf.Cpf) error {
 	if err := writer.WriteFloat(cpf.AtomZ); err != nil {
 		return err
 	}
+	if err := writer.WriteFloat(cpf.AtomHFMulliken); err != nil {
+		return err
+	}
+	if err := writer.WriteFloat(cpf.AtomMP2Mulliken); err != nil {
+		return err
+	}
+	if err := writer.WriteFloat(cpf.AtomHFNBO); err != nil {
+		return err
+	}
+	if err := writer.WriteFloat(cpf.AtomMP2NBO); err != nil {
+		return err
+	}
+	if err := writer.WriteFloat(cpf.AtomHFRESP); err != nil {
+		return err
+	}
+	if err := writer.WriteFloat(cpf.AtomMP2RESP); err != nil {
+		return err
+	}
 	if err := writer.WriteToken(cpf.AtomChainID); err != nil {
 		return err
 	}
