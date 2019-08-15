@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>manual_jp.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: "Segoe WPC", "Segoe UI", "SFUIText-Light", "HelveticaNeue-Light", sans-serif, "Droid Sans Fallback";
+	font-size: 14px;
+	padding: 0 12px;
+	line-height: 22px;
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	color: #4080D0;
+	text-decoration: none;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code {
+	font-size: inherit;
+	line-height: auto;
+}
+
+a:hover {
+	color: #4080D0;
+	text-decoration: underline;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left: 5px solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 14px;
+	line-height: 19px;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+.mac code {
+	font-size: 12px;
+	line-height: 18px;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+/** Theming */
+
+.vscode-light,
+.vscode-light pre code {
+	color: rgb(30, 30, 30);
+}
+
+.vscode-dark,
+.vscode-dark pre code {
+	color: #DDD;
+}
+
+.vscode-high-contrast,
+.vscode-high-contrast pre code {
+	color: white;
+}
+
+.vscode-light code {
+	color: #A31515;
+}
+
+.vscode-dark code {
+	color: #D7BA7D;
+}
+
+.vscode-light pre:not(.hljs),
+.vscode-light code > div {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre:not(.hljs),
+.vscode-dark code > div {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre:not(.hljs),
+.vscode-high-contrast code > div {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.vscode-light blockquote,
+.vscode-dark blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.vscode-high-contrast blockquote {
+	background: transparent;
+	border-color: #fff;
+}
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family:  "Meiryo", "Segoe WPC", "Segoe UI", "SFUIText-Light", "HelveticaNeue-Light", sans-serif, "Droid Sans Fallback";
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+</head>
+<body>
+<h1 id="fmoe-040-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95">FMOE-0.4.0 使用方法</h1>
+<h2 id="%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB">インストール</h2>
+<ol>
+<li>
+<p><a href="https://github.com/philopon/FMOE/releases/latest">Github Releases</a> (https://github.com/philopon/FMOE/releases/latest) から、
+最新版のファイル一式をダウンロードする。</p>
+</li>
+<li>
+<p><code>ユーザーディレクトリ/moefiles</code> 以下に解凍</p>
+<p>Windows 10 では <code>C:\ユーザー\(ユーザー名)\moefiles\FMOE</code></p>
+</li>
+<li>
+<p><code>ユーザーディレクトリ/moefiles/start.svl</code> に設定を追加</p>
+<p>例)</p>
+<pre class="hljs"><code><div>local function main []
+    run '$HOME/moefiles/FMOE/loader.svl';
+endfunction
+</div></code></pre>
+</li>
+<li>
+<p>MOE を起動して、右のメニューに FMOE が追加されていたらインストール完了</p>
+<p><img src="images/installed.png" alt="installed"></p>
+</li>
+</ol>
+<h2 id="%E3%83%95%E3%83%A9%E3%82%B0%E3%83%A1%E3%83%B3%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3">フラグメンテーション</h2>
+<ol>
+<li>
+<p>分子の前処理を行った後、 <code>FMOE → Fragmentation</code> を選択する。</p>
+</li>
+<li>
+<p>ポップアップする window から切断位置を選択する。</p>
+<p><img src="images/fragmentation.png" alt="fragmentation"></p>
+<ol>
+<li>
+<p>たんぱく質に対して再度自動フラグメント分割を行う。</p>
+</li>
+<li>
+<p>手動でフラグメントを分割する。ボタンをクリックした後、BDA、BAA の順で原子を選択する。</p>
+</li>
+<li>
+<p>4 のリストで選択している分割される結合を削除する。</p>
+</li>
+<li>
+<p>全ての切断リストを削除する。</p>
+</li>
+<li>
+<p>分割される結合のリスト。ダブルクリックするとズームする。</p>
+<ul>
+<li>#: 通し番号</li>
+<li>T: 切断が自動フラグメント分割によるもの (A) か、手動分割によるもの (M) か</li>
+<li>Res.: フラグメントの残基名、残基番号</li>
+<li>BDA: BDA の原子番号、原子名</li>
+<li>BAA: BAA の原子番号、原子名</li>
+</ul>
+</li>
+<li>
+<p>基底関数の選択ダイアログ</p>
+</li>
+<li>
+<p>8に表示されるAOを選択した基底関数で更新する。</p>
+</li>
+<li>
+<p>フラグメントのリスト。クリックすると原子が選択される。</p>
+<ul>
+<li>#: 通し番号</li>
+<li>Res.: 残基名</li>
+<li>nA: 原子数</li>
+<li>AO: 原子軌道の数</li>
+<li>D: BDAの数</li>
+<li>A: BAAの数</li>
+<li>C: フラグメントの形式電荷</li>
+</ul>
+</li>
+<li>
+<p>テンプレート (後述) の選択</p>
+</li>
+<li>
+<p>出力ボタン</p>
+</li>
+</ol>
+</li>
+<li>
+<p>6 でテンプレートを選択し、7 の出力ボタンをクリックし、保存場所を選択すると、PDB ファイルと ajf ファイルが出力される</p>
+</li>
+</ol>
+<h3 id="%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88">テンプレート</h3>
+<p>FMOE は選択したテンプレートを雛形に、 <code>{{変数名}}</code>の部分を置換する。変数は以下のいずれか</p>
+<ul>
+<li><code>BASENAME</code>: 保存ダイアログで指定したファイル名</li>
+<li><code>TOTAL_CHARGE</code>: 総形式電荷</li>
+<li><code>NUM_FRAGS</code>: フラグメント数</li>
+<li><code>BASIS_SET</code>: 選択した基底関数</li>
+<li><code>ABINITMP_FRAGMENT</code>: ABINIT-MPの<code>&amp;FRAGMENT</code>セクション</li>
+</ul>
+<p>このテンプレートを <code>$HOME/moefiles/ajf</code> 以下に設置すると、自動で読み込まれ、リストに表示される。</p>
+<h2 id="%E5%8F%AF%E8%A6%96%E5%8C%96">可視化</h2>
+<ol>
+<li>
+<p><code>FMOE → Visualization</code> を選択し、cpf ファイルを選択する。</p>
+</li>
+<li>
+<p>ポップアップする window から表示を調節する。</p>
+<p><img src="images/visualization.png" alt="visullization"></p>
+<ol>
+<li>
+<p>現在選択されている原子を含むフラグメントをリガンドとして設定する。</p>
+</li>
+<li>
+<p>リガンドの色選択</p>
+</li>
+<li>
+<p>表示するエネルギーの種類を選択</p>
+</li>
+<li>
+<p>表示する PIEDA の成分を選択</p>
+</li>
+<li>
+<p>IFIE に従って色を付ける原子を選択</p>
+<p>Carbon: 炭素原子のみ。ヘテロ原子はその原子の色 (窒素=青 など)
+All: 全原子。</p>
+</li>
+<li>
+<p>エネルギーの表示範囲、色の選択</p>
+</li>
+<li>
+<p>表示範囲のリセット</p>
+</li>
+<li>
+<p>リガンドとの IFIE の一覧ウインドウを表示</p>
+</li>
+</ol>
+</li>
+<li>
+<p>画面上で原子を選択すると、画面右上及び SVL ウインドウにリガンドとの相互作用が表示される。</p>
+<p><img src="images/energy_detail.png" alt="energy_detail"></p>
+<ul>
+<li>選択された原子が全て 1 つのフラグメントに含まれる場合: そのフラグメントとリガンドの ifie</li>
+<li>複数のフラグメントに含まれる場合:
+フラグメントの原子の過半数が選択されたフラグメントとリガントとの ifie の和</li>
+</ul>
+</li>
+<li>
+<p>カラースケールは sequence editor にも反映される。</p>
+<p><img src="images/sequence_editor.png" alt="sequence_editor"></p>
+</li>
+<li>
+<p>8のlistボタンを押すとIFIE/PIEDAの一覧ウインドウが表示される</p>
+<p><img src="images/ifie_list.png" alt="list_ifie"></p>
+</li>
+</ol>
+
+</body>
+</html>
