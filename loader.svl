@@ -1,5 +1,9 @@
-function main []
-    load '$HOME/moefiles/FMOE/fragmentation.svl';
-    load '$HOME/moefiles/FMOE/visualization.svl';
-    ReadMenuFile '$HOME/moefiles/FMOE/menu';
+#set main 'InitializeFMOe';
+
+function InitializeFMOe []
+    local path = fpath (modenv[]).filename;
+
+    load fcat [path, 'fragmentation.svl'];
+    load fcat [path, 'visualization.svl'];
+    ReadMenuFile fcat [path, 'menu-fmoe'];
 endfunction

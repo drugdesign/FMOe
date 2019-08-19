@@ -1,8 +1,16 @@
+#set title 'fmoe:fragmentation';
+
 function json_Read;
 
 
+local function basedir []
+    local env = modenv [];
+    return fpath env.filename;
+endfunction
+
+
 local function FillTemplatePath []
-    local exe = tok_cat [GetRC ['fmoe.path', '$HOME/moefiles/fmoe'], '/bin/fill_template.', MOE_ARCH, '.exe'];
+    local exe = fcat [basedir[], 'bin', tok_cat ['fill_template.', MOE_ARCH, '.exe']];
     if ftype exe === 'file' then
         return exe;
     endif
@@ -113,7 +121,7 @@ global FMOE_BASISSET_DATA;
 
 local function LoadBasisSetData []
     if FMOE_BASISSET_DATA === [] then
-        local data = tok_cat [GetRC ['fmoe.path', '$HOME/moefiles/fmoe'], '/basisset.json'];
+        local data = fcat [basedir[], 'basisset.json'];
         local json = freadb [data, 'line', 1000];
         FMOE_BASISSET_DATA = first json_Read [cat json, []];
     endif
@@ -127,7 +135,7 @@ endfunction
 
 
 local function GetProgramBasisSets ext
-    local data = tok_cat [GetRC ['fmoe.path', '$HOME/moefiles/fmoe'], '/basisset/', ext ,'.json'];
+    local data = fcat [basedir[], 'basisset', tok_cat [ext ,'.json']];
     if ftype data === 'file' then
         local json = freadb [data, 'line', 1000];
         local res = first json_Read [cat json, []];;
@@ -752,7 +760,7 @@ global function FMOEFragmentationGUI[]
     local wkey = WindowCreate MAIN_PANEL;
     WindowShow wkey;
 
-    local template_base = GetRC ['fmoe.path', '$HOME/moefiles/fmoe/templates'];
+    local template_base = fcat [basedir[], 'templates'];
     local templates = GetTemplates template_base;
 
     local detached_bonds = dvar_open [];

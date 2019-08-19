@@ -5,5 +5,3 @@ MENU APPEND "RightButtonBar"
         "Visualization" exec "FMOEVisualizationGUI[]"
     ENDMENU
 ENDMENU
-
-

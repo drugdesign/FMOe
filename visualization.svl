@@ -1,5 +1,4 @@
-#set title 'FMO Visualization'
-#set main 'FMOVisualization'
+#set title 'fmoe:visualization'
 
 function _Atoms;
 
@@ -49,7 +48,8 @@ const STANDARD_RESIDUES = [
 
 
 local function Cpf2SvlExePath []
-    local exe = tok_cat [GetRC ['fmoe.path', '$HOME/moefiles/fmoe'], '/bin/cpf2svl.', MOE_ARCH, '.exe'];
+    local env = modenv [];
+    local exe = fcat [fpath env.filename, 'bin', tok_cat ['cpf2svl.', MOE_ARCH, '.exe']];
     if ftype exe === 'file' then
         return exe;
     endif
