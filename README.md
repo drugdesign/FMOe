@@ -4,18 +4,23 @@
 
 ## installation
 
-1. clone repository to ~/moefiles
+1. clone or download the repository
 
     ```
-    git clone https://github.com/philopon/FMOE.git ~/moefiles/FMOE
+    git clone https://github.com/philopon/FMOE.git $SOME_DIRECTORY
     ```
 
-2. load loader.svl from \$HOME/moefiles/start.svl
+    or
+
+    download source code from github release(https://github.com/drugdesign/FMOe/releases/latest)
+
+
+2. write the code running loader.svl to `$HOME/moefiles/start.svl`
 
     for example:
 
-    ```
+    ```$HOME/moefiles/start.svl
     local function main []
-        run '$HOME/moefiles/FMOE/loader.svl';
+        run '$FMOE_INSTALL_PATH/loader.svl';
     endfunction
     ```
