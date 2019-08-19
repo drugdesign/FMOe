@@ -7,7 +7,7 @@
 1. clone or download the repository
 
     ```
-    git clone https://github.com/philopon/FMOE.git $SOME_DIRECTORY
+    git clone https://github.com/drugdesign/FMOE.git $SOME_DIRECTORY
     ```
 
     or
