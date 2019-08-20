@@ -127,7 +127,7 @@ endfunction
 
 global function CreateMoleculeFromCPF cpf
     local pdb_file = WriteTempPDBFile cpf;
-    local chains = ReadPDB pdb_file;
+    local chains = ReadPDB [pdb_file, [preserve_order: 1]];
     fdelete pdb_file;
     local prefixes = apt tok_drop [cName chains, tok_length cTag chains];
     local name = ftail fbase cpf(CPF_FILE_PATH);
