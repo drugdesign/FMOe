@@ -369,7 +369,7 @@ endfunction
 local function AssignAtomsToFragments [atoms, fragments]
     local result, i;
     for i = 1, length fragments loop
-        result(i) = fragments(i) | app add apt eqE [[atoms], fragments(i)];
+        result(i) = atoms | app add apt eqE [[fragments(i)], atoms];
     endloop
     return result;
 endfunction
