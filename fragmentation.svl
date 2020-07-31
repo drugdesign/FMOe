@@ -253,6 +253,10 @@ const MAIN_PANEL = [
             len: 20,
             width: 42
         ],
+        Checkbox : [
+                name: 'gen_job',
+                text: ['generate .sh file'] 
+            ],
         Hbox: [
             Label: [text: 'template:'],
             Option: [
@@ -369,7 +373,7 @@ endfunction
 local function AssignAtomsToFragments [atoms, fragments]
     local result, i;
     for i = 1, length fragments loop
-        result(i) = fragments(i) | app add apt eqE [[atoms], fragments(i)];
+        result(i) = atoms | app add apt eqE [[fragments(i)], atoms];
     endloop
     return result;
 endfunction
@@ -853,6 +857,18 @@ global function FMOEFragmentationGUI[]
                             BASIS_SET: values.select_basisset,
                             ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
                         ];
+                        if (WindowGetData [wkey, ['gen_job']]).gen_job then
+                            EnsureTemplate [
+                            TEMPLATE_PATH: ffullname fcat [template_base, tok_cat [fbase values.select_template, '.sh']],
+                            OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh'],
+                            BASENAME: ftail path_prefix,
+                            TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
+                            NUM_FRAGS: totok length *fragments,
+                            BASIS_SET: values.select_basisset,
+                            ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
+                        ];
+
+                        endif
                     endif
                 endif
             else

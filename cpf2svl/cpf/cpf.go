@@ -99,6 +99,8 @@ func (cpf *cpfParser) parseVersion() error {
 		cpf.result.Version = Ver7_2
 	} else if strings.HasPrefix(line, "CPF Ver.4.201 (MIZUHO)") {
 		cpf.result.Version = Ver4_201MIZUHO
+	} else if strings.HasPrefix(line, "CPF Ver.4.201") {
+		cpf.result.Version = Ver4_201MIZUHO
 	} else {
 		return &UnknownCPFVersion{Version: line}
 	}

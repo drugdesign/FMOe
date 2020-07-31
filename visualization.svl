@@ -520,9 +520,9 @@ const IFIE_LIST = [
             name: 'list',
             extendH: 1,
             extendV: 1,
-            header: '#{+5n}\tname{5t}\tMP2{+12n}\tHF{+12n}\tES{+12n}\tEX{+12n}\tCT{+12n}\tDI{+12n}',
+            header: '#{+5n}\tname{6t}\tMP2{+12n}\tHF{+12n}\tES{+12n}\tEX{+12n}\tCT{+12n}\tDI{+12n}\tMain comp.{+12n}',
             len: 50,
-            width: 100,
+            width: 120,
             multiSelect: 1,
             sortEnable: 1
         ]
@@ -546,7 +546,8 @@ local function IfieList [cpf, frags]
         local di = ifie.DI(i) * HARTREE;
         local hf = es + ex + ct;
         local mp2 = hf + di;
-        ifies[i] = twrite ['{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}', i, frag_names(i), mp2, hf, es, ex, ct, di];
+        local main_comp = ['ES', 'EX', 'CT', 'DI'] (x_max abs [es, ex, ct, di]);
+        ifies[i] = twrite ['{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}', i, frag_names(i), mp2, hf, es, ex, ct, di, main_comp];
     endloop
 
     WindowSetAttr [wkey, [
