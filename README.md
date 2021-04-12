@@ -2,9 +2,9 @@
 
 ![fmotool](./img/fmotool.gif)
 
-## installation
+## Installation
 
-1. clone or download the repository
+1. Clone or download this repository
 
     ```
     git clone https://github.com/drugdesign/FMOe.git $SOME_DIRECTORY
@@ -15,7 +15,7 @@
     download source code from github release(https://github.com/drugdesign/FMOe/releases/latest)
 
 
-2. write the code running loader.svl to `$HOME/moefiles/start.svl`
+2. Write the code running loader.svl to `$HOME/moefiles/start.svl`
 
     for example:
 
@@ -24,3 +24,18 @@
         run '$FMOE_INSTALL_PATH/loader.svl';
     endfunction
     ```
+
+## Features
+
+### Custom Templates for ajf/sh files
+
+FMOe generates ajf/sh files from templates in templates directory.
+
+#### Variables
+- {{{BASENAME}}}
+- {{{TOTAL_CHARGE}}}
+- {{{NUM_FRAGS}}}
+- {{{BASIS_SET}}}
+- {{{ABINITMP_FRAGMENT}}}
+
+
