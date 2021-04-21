@@ -1,7 +1,7 @@
 #set title 'fmoe:fragmentation';
 
 function json_Read;
-
+global fmoe_templates;
 
 local function basedir []
     local env = modenv [];
@@ -764,8 +764,11 @@ global function FMOEFragmentationGUI[]
     local wkey = WindowCreate MAIN_PANEL;
     WindowShow wkey;
 
-    local template_base = fcat [basedir[], 'templates'];
-    local templates = GetTemplates template_base;
+    if fmoe_templates == '' then
+        fmoe_templates = fcat [basedir[], 'templates'];
+    endif
+    
+    local templates = GetTemplates fmoe_templates;
 
     local detached_bonds = dvar_open [];
     local fragments = dvar_open [];
@@ -849,7 +852,7 @@ global function FMOEFragmentationGUI[]
                         local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
                         fclose pdb_path;
                         EnsureTemplate [
-                            TEMPLATE_PATH: ffullname fcat [template_base, values.select_template],
+                            TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
                             OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf'],
                             BASENAME: ftail path_prefix,
                             TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
@@ -859,7 +862,7 @@ global function FMOEFragmentationGUI[]
                         ];
                         if (WindowGetData [wkey, ['gen_job']]).gen_job then
                             EnsureTemplate [
-                            TEMPLATE_PATH: ffullname fcat [template_base, tok_cat [fbase values.select_template, '.sh']],
+                            TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
                             OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh'],
                             BASENAME: ftail path_prefix,
                             TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
