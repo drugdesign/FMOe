@@ -25,6 +25,13 @@
     endfunction
     ```
 
+    ```$HOME/moefiles/start.svl
+    # if you want to set the templates path
+    local function main []
+        run ['$FMOE_INSTALL_PATH/loader.svl', [templates: '/path/to/your/templates/directory']];
+    endfunction
+    ```
+    
 ## Features
 
 ### Custom Templates for ajf/sh files
