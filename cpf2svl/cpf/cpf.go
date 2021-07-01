@@ -18,7 +18,8 @@ const (
 	Ver7_2 Version = 72
 	// Ver4_201MIZUHO is Ver.4.201 (MIZUHO)
 	Ver4_201MIZUHO = 4201
-	//
+	// Open1.0 rev23
+	Ver1_0_23 = 1023
 )
 
 // Cpf is CPF file
@@ -101,6 +102,8 @@ func (cpf *cpfParser) parseVersion() error {
 		cpf.result.Version = Ver4_201MIZUHO
 	} else if strings.HasPrefix(line, "CPF Ver.4.201") {
 		cpf.result.Version = Ver4_201MIZUHO
+	} else if strings.HasPrefix(line, "CPF Open1.0 rev23") {
+		cpf.result.Version = Ver1_0_23
 	} else {
 		return &UnknownCPFVersion{Version: line}
 	}
@@ -108,7 +111,7 @@ func (cpf *cpfParser) parseVersion() error {
 	return nil
 }
 
-func (cpf *cpfParser) parseNumAtomsAndNumFrags() error {
+func (cpf *cpfParser) parseNumAtomsAndNumFragsVer72() error {
 	line, err := cpf.scan()
 	if err != nil {
 		return err
@@ -128,7 +131,27 @@ func (cpf *cpfParser) parseNumAtomsAndNumFrags() error {
 	return nil
 }
 
-func (cpf *cpfParser) parseAtoms() error {
+func (cpf *cpfParser) parseNumAtomsAndNumFragsVer1023() error {
+	line, err := cpf.scan()
+	if err != nil {
+		return err
+	}
+
+	if na, err := intField(line, 0, 10); err == nil {
+		cpf.result.NumAtoms = na
+	} else {
+		return err
+	}
+
+	if nf, err := intField(line, 10, 20); err == nil {
+		cpf.result.NumFrags = nf
+	} else {
+		return err
+	}
+	return nil
+}
+
+func (cpf *cpfParser) parseAtomsVer72() error {
 	cpf.result.AtomIndices = make([]int, cpf.result.NumAtoms)
 	cpf.result.AtomElements = make([]string, cpf.result.NumAtoms)
 	cpf.result.AtomTypes = make([]string, cpf.result.NumAtoms)
@@ -245,6 +268,93 @@ func (cpf *cpfParser) parseAtoms() error {
 	return nil
 }
 
+func (cpf *cpfParser) parseAtomsVer1023() error {
+	cpf.result.AtomIndices = make([]int, cpf.result.NumAtoms)
+	cpf.result.AtomElements = make([]string, cpf.result.NumAtoms)
+	cpf.result.AtomTypes = make([]string, cpf.result.NumAtoms)
+	cpf.result.AtomResNames = make([]string, cpf.result.NumAtoms)
+	cpf.result.AtomResIndices = make([]int, cpf.result.NumAtoms)
+	cpf.result.AtomFragIndices = make([]int, cpf.result.NumAtoms)
+	cpf.result.AtomX = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomY = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomZ = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomHFMulliken = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomMP2Mulliken = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomHFNBO = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomMP2NBO = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomHFRESP = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomMP2RESP = make([]float64, cpf.result.NumAtoms)
+	cpf.result.AtomChainID = make([]string, cpf.result.NumAtoms)
+	cpf.result.AtomInsCode = make([]string, cpf.result.NumAtoms)
+
+	for i := 0; i < cpf.result.NumAtoms; i++ {
+		line, err := cpf.scan()
+		if err != nil {
+			return err
+		}
+		if v, err := intField(line, 0, 10); err == nil {
+			cpf.result.AtomIndices[i] = v
+		} else {
+			return err
+		}
+		if v, err := slice(line, 10, 12); err == nil {
+			cpf.result.AtomElements[i] = v
+		} else {
+			return err
+		}
+		if v, err := slice(line, 15, 18); err == nil {
+			cpf.result.AtomTypes[i] = v
+		} else {
+			return err
+		}
+		if v, err := slice(line, 19, 22); err == nil {
+			cpf.result.AtomResNames[i] = v
+		} else {
+			return err
+		}
+		if v, err := intField(line, 22, 33); err == nil {
+			cpf.result.AtomResIndices[i] = v
+		} else {
+			return err
+		}
+		if v, err := intField(line, 33, 44); err == nil {
+			cpf.result.AtomFragIndices[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 44, 65); err == nil {
+			cpf.result.AtomX[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 65, 85); err == nil {
+			cpf.result.AtomY[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 85, 105); err == nil {
+			cpf.result.AtomZ[i] = v
+		} else {
+			return err
+		}
+		if v, err := slice(line, 108, 109); IsStringOutOfRange(err) {
+			cpf.result.AtomChainID[i] = " "
+		} else if err == nil {
+			cpf.result.AtomChainID[i] = v
+		} else {
+			return err
+		}
+		if v, err := slice(line, 109, 111); IsStringOutOfRange(err) {
+			cpf.result.AtomInsCode[i] = " "
+		} else if err == nil {
+			cpf.result.AtomInsCode[i] = v
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func (cpf *cpfParser) skip(lines int) error {
 	for i := 0; i < lines; i++ {
 		_, err := cpf.scan()
@@ -255,7 +365,7 @@ func (cpf *cpfParser) skip(lines int) error {
 	return nil
 }
 
-func (cpf *cpfParser) skipFragElectrons() error {
+func (cpf *cpfParser) skipFragElectronsVer72() error {
 	lines := cpf.result.NumFrags / 16
 	if cpf.result.NumFrags%16 > 0 {
 		lines++
@@ -263,7 +373,15 @@ func (cpf *cpfParser) skipFragElectrons() error {
 	return cpf.skip(lines)
 }
 
-func (cpf *cpfParser) parseFragBondNumbers() error {
+func (cpf *cpfParser) skipFragElectronsVer1023() error {
+	lines := cpf.result.NumFrags / 10
+	if cpf.result.NumFrags%10 > 0 {
+		lines++
+	}
+	return cpf.skip(lines)
+}
+
+func (cpf *cpfParser) parseFragBondNumbersVer72() error {
 	cpf.result.FragBondNumbers = make([]int, 0, cpf.result.NumFrags)
 
 	lines := cpf.result.NumFrags / 16
@@ -303,6 +421,46 @@ func (cpf *cpfParser) parseFragBondNumbers() error {
 	return nil
 }
 
+func (cpf *cpfParser) parseFragBondNumbersVer1023() error {
+	cpf.result.FragBondNumbers = make([]int, 0, cpf.result.NumFrags)
+
+	lines := cpf.result.NumFrags / 10
+	rests := cpf.result.NumFrags % 10
+	for l := 0; l < lines; l++ {
+		line, err := cpf.scan()
+		if err != nil {
+			return err
+		}
+
+		for j := 0; j < 10; j++ {
+			if v, err := intField(line, 0, 8); err == nil {
+				cpf.result.FragBondNumbers = append(cpf.result.FragBondNumbers, v)
+				line = line[8:]
+			} else {
+				return err
+			}
+		}
+	}
+
+	if rests == 0 {
+		return nil
+	}
+
+	line, err := cpf.scan()
+	if err != nil {
+		return err
+	}
+	for j := 0; j < rests; j++ {
+		if v, err := intField(line, 0, 8); err == nil {
+			cpf.result.FragBondNumbers = append(cpf.result.FragBondNumbers, v)
+			line = line[8:]
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func (cpf *cpfParser) getFragBonds() int {
 	i := 0
 	for _, num := range cpf.result.FragBondNumbers {
@@ -311,7 +469,7 @@ func (cpf *cpfParser) getFragBonds() int {
 	return i
 }
 
-func (cpf *cpfParser) parseFragBonds(fragBonds int) error {
+func (cpf *cpfParser) parseFragBondsVer72(fragBonds int) error {
 	cpf.result.FragBondSelfs = make([]int, fragBonds)
 	cpf.result.FragBondOthers = make([]int, fragBonds)
 
@@ -335,6 +493,30 @@ func (cpf *cpfParser) parseFragBonds(fragBonds int) error {
 	return nil
 }
 
+func (cpf *cpfParser) parseFragBondsVer1023(fragBonds int) error {
+	cpf.result.FragBondSelfs = make([]int, fragBonds)
+	cpf.result.FragBondOthers = make([]int, fragBonds)
+
+	for i := 0; i < fragBonds; i++ {
+		line, err := cpf.scan()
+		if err != nil {
+			return err
+		}
+
+		if v, err := intField(line, 0, 10); err == nil {
+			cpf.result.FragBondOthers[i] = v
+		} else {
+			return err
+		}
+		if v, err := intField(line, 10, 20); err == nil {
+			cpf.result.FragBondSelfs[i] = v
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 // MissingFields error
 type MissingFields struct {
 	Index  int
@@ -345,7 +527,7 @@ func (err *MissingFields) Error() string {
 	return fmt.Sprintf("missing %d-th field in %s", err.Index, err.String)
 }
 
-func (cpf *cpfParser) parseDimerDistances(numDimers int) error {
+func (cpf *cpfParser) parseDimerDistancesVer72(numDimers int) error {
 	cpf.result.DimerDistances = make([]float64, numDimers)
 
 	for i := 0; i < numDimers; i++ {
@@ -367,7 +549,7 @@ func (cpf *cpfParser) parseDimerDistances(numDimers int) error {
 	return nil
 }
 
-func (cpf *cpfParser) parseDimers(numDimers int) error {
+func (cpf *cpfParser) parseDimersVer72(numDimers int) error {
 	cpf.result.DimerES = make([]float64, numDimers)
 	cpf.result.DimerDI = make([]float64, numDimers)
 	cpf.result.DimerEX = make([]float64, numDimers)
@@ -416,45 +598,120 @@ func (cpf *cpfParser) parseDimers(numDimers int) error {
 	return nil
 }
 
+func (cpf *cpfParser) parseDimersVer1023(numDimers int) error {
+	cpf.result.DimerES = make([]float64, numDimers)
+	cpf.result.DimerDI = make([]float64, numDimers)
+	cpf.result.DimerEX = make([]float64, numDimers)
+	cpf.result.DimerCT = make([]float64, numDimers)
+
+	for i := 0; i < numDimers; i++ {
+		line, err := cpf.scan()
+		if err != nil {
+			return err
+		}
+		if v, err := floatField(line, 70, 92); err == nil {
+			cpf.result.DimerES[i] = v
+		} else {
+			return err
+		}
+
+		if v, err := floatField(line, 94, 116); err == nil {
+			cpf.result.DimerDI[i] = v
+		} else {
+			return err
+		}
+
+		if v, err := floatField(line, 166, 188); err == nil {
+			cpf.result.DimerEX[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 190, 212); err == nil {
+			cpf.result.DimerCT[i] = v
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func (cpf *cpfParser) parse() (*Cpf, error) {
 	if err := cpf.parseVersion(); err != nil {
 		return nil, errors.Wrap(err, "parse version")
 	}
-	if err := cpf.parseNumAtomsAndNumFrags(); err != nil {
+	if cpf.result.Version == 72 {
+		return cpf.parseVer72()
+	}
+	if cpf.result.Version == 4201 {
+		return cpf.parseVer72()
+	}
+	if cpf.result.Version == 1023 {
+		return cpf.parseVer1023()
+	}
+	return nil, errors.Errorf("non-supported version.")
+}
+
+func (cpf *cpfParser) parseVer72() (*Cpf, error) {
+	if err := cpf.parseNumAtomsAndNumFragsVer72(); err != nil {
 		return nil, errors.Wrap(err, "parse number of atoms and numbber of fragments")
 	}
-
-	if err := cpf.parseAtoms(); err != nil {
+	if err := cpf.parseAtomsVer72(); err != nil {
 		return nil, errors.Wrap(err, "parse atoms")
 	}
-
-	if err := cpf.skipFragElectrons(); err != nil {
+	if err := cpf.skipFragElectronsVer72(); err != nil {
 		return nil, errors.Wrap(err, "skip fragment electrons")
 	}
-
-	if err := cpf.parseFragBondNumbers(); err != nil {
+	if err := cpf.parseFragBondNumbersVer72(); err != nil {
 		return nil, errors.Wrap(err, "parse fragment bond numbers")
 	}
-
 	fragBonds := cpf.getFragBonds()
-	if err := cpf.parseFragBonds(fragBonds); err != nil {
+	if err := cpf.parseFragBondsVer72(fragBonds); err != nil {
 		return nil, errors.Wrap(err, "parse fragment bonds")
 	}
-
 	numDimers := (cpf.result.NumFrags * (cpf.result.NumFrags - 1)) / 2
-
-	if err := cpf.parseDimerDistances(numDimers); err != nil {
+	if err := cpf.parseDimerDistancesVer72(numDimers); err != nil {
 		return nil, errors.Wrap(err, "parse dimer distances")
 	}
-
 	// (dipole moment + monomers) + information
 	if err := cpf.skip(2*cpf.result.NumFrags + 7); err != nil {
 		return nil, errors.Wrap(err, "skip informations")
 	}
-
-	if err := cpf.parseDimers(numDimers); err != nil {
+	if err := cpf.parseDimersVer72(numDimers); err != nil {
 		return nil, errors.Wrap(err, "parse dimers")
 	}
+	return &cpf.result, nil
+}
 
+func (cpf *cpfParser) parseVer1023() (*Cpf, error) {
+	if err := cpf.parseNumAtomsAndNumFragsVer1023(); err != nil {
+		return nil, errors.Wrap(err, "parse number of atoms and numbber of fragments")
+	}
+	if err := cpf.skip(4); err != nil {
+		return nil, errors.Wrap(err, "skip informations")
+	}
+	if err := cpf.parseAtomsVer1023(); err != nil {
+		return nil, errors.Wrap(err, "parse atoms")
+	}
+	if err := cpf.skipFragElectronsVer1023(); err != nil {
+		return nil, errors.Wrap(err, "skip fragment electrons")
+	}
+	if err := cpf.parseFragBondNumbersVer1023(); err != nil {
+		return nil, errors.Wrap(err, "parse fragment bond numbers")
+	}
+	fragBonds := cpf.getFragBonds()
+	if err := cpf.parseFragBondsVer1023(fragBonds); err != nil {
+		return nil, errors.Wrap(err, "parse fragment bonds")
+	}
+	numDimers := (cpf.result.NumFrags * (cpf.result.NumFrags - 1)) / 2
+	if err := cpf.parseDimerDistancesVer72(numDimers); err != nil {
+		return nil, errors.Wrap(err, "parse dimer distances")
+	}
+	// (dipole moment + monomers) + information
+	if err := cpf.skip(2*cpf.result.NumFrags + 9); err != nil {
+		return nil, errors.Wrap(err, "skip informations")
+	}
+	if err := cpf.parseDimersVer1023(numDimers); err != nil {
+		return nil, errors.Wrap(err, "parse dimers")
+	}
 	return &cpf.result, nil
 }
