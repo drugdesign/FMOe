@@ -1,0 +1,18 @@
+#set title 'moe_extensions:water_treatment';
+
+function mean_tempfactor, max_tempfactor, min_tempfactor; //scalar
+
+global function remove_water_by_tempfactor [func_name, range]
+    local level;
+    if func_name == 'mean' then
+        level = mean_tempfactor [_Atoms[range]];
+    elseif func_name == 'max' then
+        level = max_tempfactor [_Atoms[range]];
+    elseif func_name == 'min' then
+        level = min_tempfactor [_Atoms[range]];
+    endif
+    local remove_sol = _Atoms['$$solvent'] | aTempFactor _Atoms['$$solvent'] > level;
+    write['{} solvents were deleted. \n', length remove_sol];
+    oDestroy remove_sol;
+endfunction
+

@@ -1,0 +1,23 @@
+#set title 'moe_extensions:util';
+
+global function mean_tempfactor [atoms]
+    return add aTempFactor atoms / length atoms;
+endfunction
+
+global function max_tempfactor [atoms]
+    return max aTempFactor atoms;
+endfunction
+
+global function min_tempfactor [atoms]
+    return min aTempFactor atoms;
+endfunction
+
+
+global function Initialize_selection []
+    aSetSelected [_Atoms['$$all'], 0];
+    aSetFixed [_Atoms['$$all'], 0];
+endfunction
+
+global function GetH [range]
+    return _Atoms[range] | aElement _Atoms[range] == 'H';
+endfunction

@@ -1,0 +1,28 @@
+#set title 'moe_extensions:MM_wrapper';
+
+
+global function ExecMM [aFixed_vector, weight_vector]
+    call ['MM', 
+        [pot_finalize  : 0,   
+        pot_charge     : 0,   
+        keep_chirality : '',   
+        sd_maxit       : 100,
+        sd_gtest       : 1000,
+        cg_maxit       : 100,
+        cg_gtest       : 100,
+        optimizeOH     : 1,
+        maxit          : 500,
+        gtest          : 0.1,
+        maxstep        : 1,
+        maxstep_x      : 5,
+        msg_prefix     : '',
+        aRigidBody     : 0,
+        rigidHOH       : 0,
+        rigidOH        : 0,
+        aInert         : 0,
+        aFixed         : aFixed_vector,
+        tetherWeight   : weight_vector,
+        careful        : 1000,
+        private        : 0,
+        verbose        : 1]];
+endfunction
