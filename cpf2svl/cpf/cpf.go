@@ -20,6 +20,8 @@ const (
 	Ver4_201MIZUHO = 4201
 	// Open1.0 rev23
 	Ver1_0_23 = 1023
+	// Open1.0 rev10
+	Ver1_0_10 = 1010
 )
 
 // Cpf is CPF file
@@ -102,6 +104,8 @@ func (cpf *cpfParser) parseVersion() error {
 		cpf.result.Version = Ver4_201MIZUHO
 	} else if strings.HasPrefix(line, "CPF Ver.4.201") {
 		cpf.result.Version = Ver4_201MIZUHO
+	} else if strings.HasPrefix(line, "CPF Open1.0 rev10") {
+		cpf.result.Version = Ver1_0_10
 	} else if strings.HasPrefix(line, "CPF Open1.0 rev23") {
 		cpf.result.Version = Ver1_0_23
 	} else {
@@ -635,6 +639,43 @@ func (cpf *cpfParser) parseDimersVer1023(numDimers int) error {
 	return nil
 }
 
+func (cpf *cpfParser) parseDimersVer1010(numDimers int) error {
+	cpf.result.DimerES = make([]float64, numDimers)
+	cpf.result.DimerDI = make([]float64, numDimers)
+	cpf.result.DimerEX = make([]float64, numDimers)
+	cpf.result.DimerCT = make([]float64, numDimers)
+
+	for i := 0; i < numDimers; i++ {
+		line, err := cpf.scan()
+		if err != nil {
+			return err
+		}
+		if v, err := floatField(line, 50, 72); err == nil {
+			cpf.result.DimerES[i] = v
+		} else {
+			return err
+		}
+
+		if v, err := floatField(line, 74, 96); err == nil {
+			cpf.result.DimerDI[i] = v
+		} else {
+			return err
+		}
+
+		if v, err := floatField(line, 362, 384); err == nil {
+			cpf.result.DimerEX[i] = v
+		} else {
+			return err
+		}
+		if v, err := floatField(line, 386, 408); err == nil {
+			cpf.result.DimerCT[i] = v
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func (cpf *cpfParser) parse() (*Cpf, error) {
 	if err := cpf.parseVersion(); err != nil {
 		return nil, errors.Wrap(err, "parse version")
@@ -644,6 +685,9 @@ func (cpf *cpfParser) parse() (*Cpf, error) {
 	}
 	if cpf.result.Version == 4201 {
 		return cpf.parseVer72()
+	}
+	if cpf.result.Version == 1010 {
+		return cpf.parseVer1010()
 	}
 	if cpf.result.Version == 1023 {
 		return cpf.parseVer1023()
@@ -677,6 +721,37 @@ func (cpf *cpfParser) parseVer72() (*Cpf, error) {
 		return nil, errors.Wrap(err, "skip informations")
 	}
 	if err := cpf.parseDimersVer72(numDimers); err != nil {
+		return nil, errors.Wrap(err, "parse dimers")
+	}
+	return &cpf.result, nil
+}
+
+func (cpf *cpfParser) parseVer1010() (*Cpf, error) {
+	if err := cpf.parseNumAtomsAndNumFragsVer72(); err != nil {
+		return nil, errors.Wrap(err, "parse number of atoms and numbber of fragments")
+	}
+	if err := cpf.parseAtomsVer72(); err != nil {
+		return nil, errors.Wrap(err, "parse atoms")
+	}
+	if err := cpf.skipFragElectronsVer72(); err != nil {
+		return nil, errors.Wrap(err, "skip fragment electrons")
+	}
+	if err := cpf.parseFragBondNumbersVer72(); err != nil {
+		return nil, errors.Wrap(err, "parse fragment bond numbers")
+	}
+	fragBonds := cpf.getFragBonds()
+	if err := cpf.parseFragBondsVer72(fragBonds); err != nil {
+		return nil, errors.Wrap(err, "parse fragment bonds")
+	}
+	numDimers := (cpf.result.NumFrags * (cpf.result.NumFrags - 1)) / 2
+	if err := cpf.parseDimerDistancesVer72(numDimers); err != nil {
+		return nil, errors.Wrap(err, "parse dimer distances")
+	}
+	// (dipole moment + monomers) + information
+	if err := cpf.skip(2*cpf.result.NumFrags + 7); err != nil {
+		return nil, errors.Wrap(err, "skip informations")
+	}
+	if err := cpf.parseDimersVer1010(numDimers); err != nil {
 		return nil, errors.Wrap(err, "parse dimers")
 	}
 	return &cpf.result, nil
