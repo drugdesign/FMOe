@@ -10,6 +10,7 @@ endfunction
 
 
 local function FillTemplatePath []
+    // Template renderer binary path.
     local exe = fcat [basedir[], 'bin', tok_cat ['fill_template.', MOE_ARCH, '.exe']];
     if ftype exe === 'file' then
         return exe;
@@ -18,6 +19,10 @@ endfunction
 
 
 local function DetachMarker [color, bonds]
+    // detach marker options
+    // :color: coloar
+    // :bonds: List[(atom, atom)]
+    // TODO: move to View
     local bda = first tr bonds;
     local baa = second tr bonds;
 
@@ -38,6 +43,10 @@ endfunction
 
 
 local function DrawDetachMarker [title_prefix, color, bonds]
+    // :title_prefix: 
+    // :color:
+    // :bonds: List[(atom, atom)]
+    // TODO: move to view
     local keys = app GCreate tok_cat [title_prefix, totok igen length bonds];
     app GVertex apt cat [keys, DetachMarker [color, bonds]];
     return keys;
@@ -45,6 +54,9 @@ endfunction
 
 
 local function FMOFragmentationProtein chains
+    // divides protetins into fragments
+    // :chains:
+    // return: List[(atom, atom)]
     chains = chains | app andE (rType cResidues chains == 'amino');
     local atoms = rAtoms (cat cResidues chains);
     local bda = apt mget [atoms, aName atoms == 'CA'];
@@ -54,6 +66,8 @@ endfunction
 
 
 local function IsCTerminalFragment fragments
+    // :fragments:
+    // return index of fragments
     local is_amino = app andE eqE [rType aResidue fragments, ['amino']];
     local coo = andE [
       eqE [app add eqE [aMMType fragments, 'O2'], 2],
@@ -73,6 +87,7 @@ endfunction
 
 
 local function StripBondExtra bonds
+    // ?
     local bda = app first bonds;
     local baa = app second bonds;
     return tr [bda, baa];
@@ -80,6 +95,8 @@ endfunction
 
 
 local function BatchBinarySearch [key, candidates]
+    // :key:
+    // :candidates: sorted items 
     local lefts = zero key;
     local rights = (length candidates + 1) * one key;
 
@@ -120,6 +137,7 @@ global FMOE_BASISSET_DATA;
 
 
 local function LoadBasisSetData []
+    // TODO:   
     if FMOE_BASISSET_DATA === [] then
         local data = fcat [basedir[], 'basisset.json'];
         local json = freadb [data, 'line', 1000];
@@ -129,12 +147,14 @@ endfunction
 
 
 local function GetBasisSetNames []
+    // ?
     LoadBasisSetData [];
     return first untag FMOE_BASISSET_DATA;
 endfunction
 
 
 local function GetProgramBasisSets ext
+    // ?
     local data = fcat [basedir[], 'basisset', tok_cat [ext ,'.json']];
     if ftype data === 'file' then
         local json = freadb [data, 'line', 1000];
@@ -148,12 +168,14 @@ endfunction
 
 
 local function GetBasisSetData name
+    // ?
     LoadBasisSetData [];
     return tagget [FMOE_BASISSET_DATA, name];
 endfunction
 
 
 local function GetNumberOfFunctions [basis, atoms]
+    // Functionals?
     return app add apt tagget [GetBasisSetData basis, aElement atoms];
 endfunction
 
@@ -270,6 +292,8 @@ const MAIN_PANEL = [
 
 
 local function GetTemplates path
+    // :path: templates directory path
+    // return: List[str]
     local templates = ftail flist path;
     if length templates > 1 then
         return templates | not eqE [templates, 'sample.ajf'];
@@ -280,6 +304,9 @@ endfunction
 
 
 local function FormatDetachedBonds bonds
+    // :bonds:
+    // return: 
+    // TODO: move to model
     local bda = first tr bonds;
     local baa = second tr bonds;
     local types = third tr bonds;
@@ -298,6 +325,7 @@ endfunction
 
 
 local function Common t
+    // ?
     if t === [] then
         return [];
     endif
@@ -311,6 +339,10 @@ endfunction
 
 
 local function FormatFragments [basisset, fragments, detached, attached]
+    // :basisset: 
+    // :fragments: List[List[atom]]
+    // :detached: List[atom]
+    // :attached: List[atom]
     local res = Common rName aResidue fragments;
     local resi = totok Common rUID aResidue fragments;
     local nD = app length detached;
@@ -764,10 +796,10 @@ global function FMOEFragmentationGUI[]
     local wkey = WindowCreate MAIN_PANEL;
     WindowShow wkey;
 
+    // fmoe_templates is a globaal variable.
     if fmoe_templates == '' then
         fmoe_templates = fcat [basedir[], 'templates'];
     endif
-    
     local templates = GetTemplates fmoe_templates;
 
     local detached_bonds = dvar_open [];
@@ -777,8 +809,10 @@ global function FMOEFragmentationGUI[]
 
     AutoSplitBonds [detached_bonds, chains];  // slow
     UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];  // slow
+    // TODO: remove the hard coding, i.e. '6-31g'.
     RefreshWindow [wkey, '6-31g*', *detached_bonds, *fragments];
 
+    // TODO: rename select_template more acculately.
     WindowSetAttr [wkey, [select_template: [text: templates]]];
     local [default_basisset, aliases] = GetProgramBasisSets fext (WindowGetData [wkey, ['select_template']]).select_template;
     WindowSetAttr [wkey, [select_basisset: [text: first untag aliases]]];
@@ -787,7 +821,9 @@ global function FMOEFragmentationGUI[]
         WindowSetData [wkey, [select_basisset: default_basisset]];
     endif
 
+    // ?
     task_call [#CleanupMain, [quit, wkey, detached_bonds], [master: 'none', creator: 'detach']];
+    // TODO: more acculate naming
     task_call [#Sentinel, [wkey, detached_bonds, fragments], [master: 'parent', creator: 'detach']];
 
     loop
@@ -796,7 +832,10 @@ global function FMOEFragmentationGUI[]
         if trigger === 'auto' then
             RemoveAutoBonds detached_bonds;
             AutoSplitBonds [detached_bonds, chains];
+            // TODO: neccessary for more precise treatment of a reference variable(fragments).
+            // TODO: chains should be reset.
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            // TODO: second varibles should be more understandable. 
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
 
         elseif trigger === 'reset' then
@@ -805,6 +844,7 @@ global function FMOEFragmentationGUI[]
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
 
         elseif trigger === 'remove_bond' then
+            // naming? Indices? not Pointer or Key?
             RemoveBondsByIndices [detached_bonds, first values.detached_bond_list];
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
@@ -815,6 +855,7 @@ global function FMOEFragmentationGUI[]
 
         elseif trigger === 'add_bond' then
             local detach = BondPicker [];
+            // should reverse if
             if not (detach === []) then
                 AddSplitBond [detached_bonds, detach];
                 UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
@@ -822,6 +863,7 @@ global function FMOEFragmentationGUI[]
             endif
 
         elseif trigger === 'select_basisset' then
+            // ?
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
 
         elseif trigger === 'detached_bond_list' then
@@ -851,24 +893,21 @@ global function FMOEFragmentationGUI[]
                         local pdb_path = fopenw tok_cat [path_prefix, '.pdb'];
                         local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
                         fclose pdb_path;
-                        EnsureTemplate [
-                            TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
-                            OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf'],
+                        local envTemplate = [
                             BASENAME: ftail path_prefix,
                             TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
                             NUM_FRAGS: totok length *fragments,
                             BASIS_SET: values.select_basisset,
                             ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
                         ];
+                        EnsureTemplate tagcat [envTemplate, [
+                            TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
+                            OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf']]
+                        ];
                         if (WindowGetData [wkey, ['gen_job']]).gen_job then
-                            EnsureTemplate [
-                            TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
-                            OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh'],
-                            BASENAME: ftail path_prefix,
-                            TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
-                            NUM_FRAGS: totok length *fragments,
-                            BASIS_SET: values.select_basisset,
-                            ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
+                            EnsureTemplate tagcat [envTemplate, [
+                                TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
+                                OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh']]
                         ];
 
                         endif
