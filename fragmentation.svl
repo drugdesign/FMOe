@@ -779,7 +779,11 @@ function fmoe_fragmentation opts
 endfunction
 
 
-global function FMOEFragmentationGUI[]
+global function FMOEFragmentationGUI opts
+    opts = tagcat [opts,
+        [test: '']
+    ];
+
     local quit = dvar_open [];
     dvar_lock quit;
 
@@ -827,88 +831,118 @@ global function FMOEFragmentationGUI[]
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             // TODO: second varibles should be more understandable. 
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
+            continue;
+        endif
 
-        elseif trigger === 'reset' then
+        if trigger === 'reset' then
             RemoveAllBonds detached_bonds;
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
-
-        elseif trigger === 'remove_bond' then
+            continue;
+        endif
+        
+        if trigger === 'remove_bond' then
             // naming? Indices? not Pointer or Key?
             RemoveBondsByIndices [detached_bonds, first values.detached_bond_list];
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
-
-        elseif trigger === 'refresh' then
+            continue;
+        endif
+        
+        if trigger === 'refresh' then
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
-
-        elseif trigger === 'add_bond' then
+            continue;
+        endif
+        
+        if trigger === 'add_bond' then
             local detach = BondPicker [];
-            // should reverse if
             if not (detach === []) then
-                AddSplitBond [detached_bonds, detach];
-                UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
-                RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments];
+                continue;
             endif
-
-        elseif trigger === 'select_basisset' then
+            AddSplitBond [detached_bonds, detach];
+            UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments];
+            continue;
+        endif
+        
+        if trigger === 'select_basisset' then
             // ?
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
-
-        elseif trigger === 'detached_bond_list' then
+            continue;
+        endif
+        
+        if trigger === 'detached_bond_list' then
             aSetSelected [Atoms [], 0];
             local selected_detached_atoms = cat StripBondExtra (*detached_bonds)[first values.detached_bond_list];
             aSetSelected [selected_detached_atoms, 1];
             WindowSetData [wkey, [
                 fragment_list: (igen length *fragments) | app length AssignAtomsToFragments [selected_detached_atoms, *fragments]
             ]];
-
-        elseif trigger === 'fragment_list' then
+            continue;
+        endif
+        
+        if trigger === 'fragment_list' then
             aSetSelected [Atoms[], 0];
             local selected_fragmennt_atoms = cat (*fragments)[first values.fragment_list];
             aSetSelected [selected_fragmennt_atoms, 1];
             WindowSetData [wkey, [
                 detached_bond_list: (igen length *detached_bonds) | app orE app orE apt eqE [[[selected_fragmennt_atoms]], StripBondExtra *detached_bonds]
             ]];
-
-        elseif trigger === 'fmoe_fragmentation' then
+            continue;
+        endif
+        
+        if trigger === 'fmoe_fragmentation' then
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
 
-            if fext values.select_template === 'ajf' then
-                local [[ok, _], state] = task_call [#AlertAtomDialog, cat cAtoms chains, [master: 'parent']];
-                if state === '' and ok then
-                    local path_prefix = AbinitMpFilePrompt [];
-                    if not (path_prefix === []) then
-                        local pdb_path = fopenw tok_cat [path_prefix, '.pdb'];
-                        local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
-                        fclose pdb_path;
-                        local envTemplate = [
-                            BASENAME: ftail path_prefix,
-                            TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
-                            NUM_FRAGS: totok length *fragments,
-                            BASIS_SET: values.select_basisset,
-                            ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
-                        ];
-                        RenderTemplate tagcat [envTemplate, [
-                            TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
-                            OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf']]
-                        ];
-                        if (WindowGetData [wkey, ['gen_job']]).gen_job then
-                            RenderTemplate tagcat [envTemplate, [
-                                TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
-                                OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh']]
-                        ];
-
-                        endif
-                    endif
-                endif
-            else
+            // Check the selected template is an ajf file.
+            if not (fext values.select_template === 'ajf') then
                 Warning twrite ['unknown template extension: {}', fext values.select_template];
+                continue;
             endif
 
-        endif
+            // Check Atom type for abinitmp execution.
+            local [[ok, _], state] = task_call [#AlertAtomDialog, cat cAtoms chains, [master: 'parent']];
+            if not (state === '' and ok) then
+                continue;
+            endif 
 
+            // Set output basename.
+            local path_prefix = AbinitMpFilePrompt [];
+            if path_prefix === [] then
+                continue;
+            endif
+
+            // Write PDB file.
+            local pdb_file = fopenw tok_cat [path_prefix, '.pdb'];
+            local w_atoms = fwrite_abinitmp_pdb [pdb_file, chains];
+            fclose pdb_file;
+            
+
+            local envTemplate = [
+                BASENAME: ftail path_prefix,
+                TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
+                NUM_FRAGS: totok length *fragments,
+                BASIS_SET: values.select_basisset,
+                ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
+            ];
+
+            // Render ajf file.
+            RenderTemplate tagcat [envTemplate, [
+                TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
+                OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf']]
+            ];
+
+            // Render sh file.
+            if not ((WindowGetData [wkey, ['gen_job']]).gen_job) then
+                continue;
+            endif
+            RenderTemplate tagcat [envTemplate, [
+                TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
+                OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh']]
+            ];
+            continue;
+        endif
     endloop
     WindowDestroy wkey;
 endfunction
@@ -916,5 +950,9 @@ endfunction
 function main opts
     if opts.test == 'fragmentation' then
         fmoe_fragmentation opts; 
+    endif
+    if opts.test == 'fragmentation_gui' then
+        Open opts.moe;
+        FMOEFragmentationGUI opts;
     endif
 endfunction
