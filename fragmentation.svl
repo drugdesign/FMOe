@@ -469,32 +469,44 @@ local function CheckAtomNames atoms
     for atom in atoms loop
         local element = aElement atom;
         local name = tolower string aName atom;
-        if length name > 1 then
-            if     andE [element === 'H', orE (name(2) == "eofgs")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'B', orE (name(2) == "eraikh")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'C', orE (name(2) == "laroudsemfn")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'N', orE (name(2) == "eaibdpoh")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'O', orE (name(2) == "sg")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'F', orE (name(2) == "erml")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'P', orE (name(2) == "drmtboau")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'S', orE (name(2) == "icernbmg")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'K', orE (name(2) == "r")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'Y', orE (name(2) == "b")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'I', orE (name(2) == "nr")] then
-                alert = append [alert, atom];
-            elseif andE [element === 'U', orE (name(2) == "u")] then
-                alert = append [alert, atom];
-            endif
+        if length name < 2 then
+            continue;
+        endif
+        if andE [element === 'H', orE (name(2) == "eofgs")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'B', orE (name(2) == "eraikh")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'C', orE (name(2) == "laroudsemfn")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'N', orE (name(2) == "eaibdpoh")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'O', orE (name(2) == "sg")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'F', orE (name(2) == "erml")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'P', orE (name(2) == "drmtboau")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'S', orE (name(2) == "icernbmg")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'K', orE (name(2) == "r")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'Y', orE (name(2) == "b")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'I', orE (name(2) == "nr")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'U', orE (name(2) == "u")] then
+            alert = append [alert, atom];
         endif
     endloop
     return alert;
