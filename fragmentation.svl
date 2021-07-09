@@ -5,6 +5,7 @@ function RenderTemplate;
 function BatchBinarySearch;
 function GetProgramBasisSets;
 function GetNumberOfFunctions;
+function GetFragmentationPanel;
 global FMOE_BASISSET_DATA;
 global fmoe_templates;
 
@@ -104,117 +105,6 @@ global function FMOFragmentation chains
     local mask = not app orE app cat apt eqE [bonds, [[terms]]];
     return bonds | mask;
 endfunction
-
-
-const MAIN_PANEL = [
-    name: 'fmoe_fragmentation',
-    title: 'FMOE Fragmentation',
-    windowName: 'FMOEFragmentation',
-    text: 'Generate',
-    Vbox: [
-        Hbox: [
-            Label: [
-                text: 'Bonds',
-                extendH: 1,
-                resizeH: 1
-            ],
-            Button: [
-                name: 'auto',
-                text: 'auto'
-            ],
-            Button: [
-                name: 'add_bond',
-                text: '+',
-                font: 'largeFixedBold'
-            ],
-            Button: [
-                name: 'remove_bond',
-                text: '-',
-                font: 'largeFixedBold',
-                foreground: 'red'
-            ],
-            Button: [
-                name: 'reset',
-                text: '0',
-                font: 'largeFixedBold'
-            ]
-        ],
-        Listbox: [
-            name: 'detached_bond_list',
-            header: '#{+4n}\tT{-1t}\tBDA{+11t}\tBAA{+11t}',
-            headerBubbleHelp: tok_cat [
-                '#: index\n',
-                'T: bond split type\n',
-                '   A: auto\n',
-                '   M: manual\n',
-                'Res.: residue name\n',
-                'BDA: bond detached atom\n',
-                'BAA: bond attached atom'],
-            onTrigger: 'return',
-            multiSelect: 2,
-            extendV: 1,
-            resizeV: 1,
-            extendH: 1,
-            resizeH: 1,
-            type: 'int',
-            sortEnable: 1,
-            len: 20,
-            width: 37
-        ],
-        Hbox: [
-            Label: [
-                text: 'Fragments',
-                extendH: 1,
-                resizeH: 1
-            ],
-            Option: [
-                name: 'select_basisset',
-                onTrigger: 'return',
-                extendH: 1,
-                resizeH: 1
-            ],
-            Button: [
-                text: 'refresh',
-                name: 'refresh'
-            ]
-        ],
-        Listbox: [
-            name: 'fragment_list',
-            header: '#{+4n}\tRes.{+6t}\tnA{+3n}\tAO{+3n}\tD{+2n}\tA{+2n}\tC{+2n}',
-            headerBubbleHelp: tok_cat [
-                '#: index\n',
-                'Res.: majour residue\n',
-                'nA: fragment atom count\n',
-                'AO: fragment atomic orbital count\n',
-                'D: number of detached electron pairs\n',
-                'A: number of attached electron pairs\n',
-                'C: fragment formal charge'
-            ],
-            onTrigger: 'return',
-            multiSelect: 2,
-            extendV: 1,
-            resizeV: 1,
-            extendH: 1,
-            resizeH: 1,
-            type: 'int',
-            sortEnable: 1,
-            len: 20,
-            width: 42
-        ],
-        Checkbox : [
-                name: 'gen_job',
-                text: ['generate .sh file'] 
-            ],
-        Hbox: [
-            Label: [text: 'template:'],
-            Option: [
-                name: 'select_template',
-                extendH: 1,
-                resizeH: 1
-            ]
-        ]
-    ]
-];
 
 
 local function GetTemplates path
@@ -754,7 +644,7 @@ global function FMOEFragmentationGUI opts
     local quit = dvar_open [];
     dvar_lock quit;
 
-    local wkey = WindowCreate MAIN_PANEL;
+    local wkey = WindowCreate GetFragmentationPanel [];
     WindowShow wkey;
 
     // fmoe_templates is a globaal variable.

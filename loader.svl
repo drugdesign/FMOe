@@ -6,6 +6,7 @@ function InitializeFMOe opts
     local path = fpath (modenv[]).filename;
     load fcat [path, 'TemplateRenderer.svl'];
     load fcat [path, 'utils.svl'];
+    load fcat [path, 'fragmentation_view.svl'];
     load fcat [path, 'fragmentation.svl'];
     load fcat [path, 'visualization.svl'];
     ReadMenuFile fcat [path, 'menu-fmoe'];
