@@ -352,6 +352,7 @@ endfunction
 
 
 local function CheckAtomNames atoms
+    // TODO: make test
     atoms = atoms | rType aResidue atoms == 'none';
 
     local alert = [];
@@ -713,11 +714,11 @@ global function FMOEFragmentationGUI opts
         endif
         
         if trigger === 'add_bond' then
-            local detach = BondPicker [];
-            if not (detach === []) then
+            local [bda, baa] = BondPicker [];
+            if not (bda and baa) then
                 continue;
             endif
-            AddSplitBond [detached_bonds, detach];
+            AddSplitBond [detached_bonds, [bda, baa]];
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments];
             continue;
