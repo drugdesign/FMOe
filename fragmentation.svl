@@ -9,7 +9,7 @@ local function basedir []
 endfunction
 
 
-local function FillTemplatePath []
+local function getRendererPath []
     // Template renderer binary path.
     local exe = fcat [basedir[], 'bin', tok_cat ['fill_template.', MOE_ARCH, '.exe']];
     if ftype exe === 'file' then
@@ -691,8 +691,11 @@ global function fwrite_abinitmp_pdb [f, chains]
 endfunction
 
 
-local function EnsureTemplate env
-    local pkey = exe_open_shell [FillTemplatePath[], [], env];
+local function renderTemplate env
+    env = tagcat [env, [
+        renderer: getRendererPath[]
+    ]];
+    local pkey = exe_open_shell [env.renderer, [], env];
     while exe_status pkey loop
         sleep 0.01;
     endloop
@@ -786,6 +789,39 @@ local function AbinitMpFilePrompt []
         break;
     endloop
     return prefix;
+endfunction
+
+
+function fmoe_fragmentation opts
+    opts = tagcat [opts, [
+        template: 'templates\\sample.ajf',
+        renderer: 'bin\\fill_template.win64.exe',
+        moe: 'tests\\test.moe',
+        fbase: 'test',
+        pdb: 'tests\\temp\\test.pdb',
+        ajf: 'tests\\temp\\test.ajf',
+        basis_set: '6-31g*'
+    ]];
+    print opts;
+    Open opts.moe;
+    local detached_bonds = dvar_open [];
+    local fragments = dvar_open [];
+    local chains = Chains [];
+    AutoSplitBonds [detached_bonds, chains];
+    UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+    local pdb_path = fopenw opts.pdb;
+    local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
+    fclose pdb_path;
+    renderTemplate [
+        BASENAME: opts.fbase,
+        TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
+        NUM_FRAGS: totok length *fragments,
+        BASIS_SET: opts.basis_set,
+        ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds],
+        renderer: opts.renderer,
+        TEMPLATE_PATH: ffullname opts.template,
+        OUTPUT_PATH: ffullname opts.ajf
+    ];
 endfunction
 
 
@@ -900,12 +936,12 @@ global function FMOEFragmentationGUI[]
                             BASIS_SET: values.select_basisset,
                             ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
                         ];
-                        EnsureTemplate tagcat [envTemplate, [
+                        renderTemplate tagcat [envTemplate, [
                             TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
                             OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf']]
                         ];
                         if (WindowGetData [wkey, ['gen_job']]).gen_job then
-                            EnsureTemplate tagcat [envTemplate, [
+                            renderTemplate tagcat [envTemplate, [
                                 TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
                                 OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh']]
                         ];
@@ -921,4 +957,10 @@ global function FMOEFragmentationGUI[]
 
     endloop
     WindowDestroy wkey;
+endfunction
+
+function main opts
+    if opts.test == 'fragmentation' then
+        fmoe_fragmentation opts; 
+    endif
 endfunction
