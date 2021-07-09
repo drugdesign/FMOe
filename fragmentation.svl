@@ -768,7 +768,8 @@ global function FMOEFragmentationGUI opts
     WindowDestroy wkey;
 endfunction
 
-function main opts
+
+local function main opts
     if opts.test == 'fragmentation' then
         fmoe_fragmentation opts; 
     endif
