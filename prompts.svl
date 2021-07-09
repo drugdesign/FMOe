@@ -1,0 +1,63 @@
+#svl
+
+function AbinitMpFilePrompt opts
+    opts = tagcat [opts, [
+        prefix: ''
+    ]];
+    loop
+        if opts.prefix == '' then
+            opts.prefix = FilePrompt [mode: 'saveAs'];
+            if opts.prefix === [] then
+                return [];
+            endif
+        endif
+
+        local fnpdb = tok_cat [opts.prefix, '.pdb'];
+        local fnajf = tok_cat [opts.prefix, '.ajf'];
+        local ftpdb = ftype fnpdb;
+        local ftajf = ftype fnajf;
+        
+        if ftpdb == 'dir' then
+            Warning twrite ['{} is directory', fnpdb];
+            continue;
+        endif
+        if ftpdb == 'other' then
+            Warning twrite ['file type of {} is other', fnpdb];
+            continue;
+        endif
+        if ftajf == 'dir' then
+            Warning twrite ['{} is directory', fnajf];
+            continue;
+        endif
+        if ftajf == 'other' then
+            Warning twrite ['file type of {} is other', fnajf];
+            continue;
+        endif
+
+        if ftpdb == 'file' and ftajf == 'file' then
+            if YesNo twrite ['{} and {} is already exists. overwrite?', fnpdb, fnajf] then
+                break;
+            endif
+            continue;
+        endif
+        if ftpdb == 'file' then
+            if YesNo twrite ['{} is already exists. overwrite?', fnpdb] then
+                break;
+            endif
+            continue;
+        endif
+        if ftajf == 'file' then
+            if YesNo twrite ['{} is already exists. overwrite?', fnajf] then
+                break;
+            endif
+            continue;
+        endif
+        break;
+    endloop
+    return opts.prefix;
+endfunction
+
+
+local function main opts
+    print AbinitMpFilePrompt opts;
+endfunction

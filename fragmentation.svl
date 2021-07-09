@@ -6,6 +6,7 @@ function BatchBinarySearch;
 function GetProgramBasisSets;
 function GetNumberOfFunctions;
 function GetFragmentationPanel;
+function AbinitMpFilePrompt;
 global FMOE_BASISSET_DATA;
 global fmoe_templates;
 
@@ -555,55 +556,6 @@ local function FormatAbinitMpFragment [atoms, fragments, detached_bonds]
 endfunction
 
 
-local function AbinitMpFilePrompt []
-    local prefix;
-    loop
-        prefix = FilePrompt [mode: 'saveAs'];
-        if prefix === [] then
-            return [];
-        endif
-
-        local fnpdb = tok_cat [prefix, '.pdb'];
-        local fnajf = tok_cat [prefix, '.ajf'];
-        local ftpdb = ftype fnpdb;
-        local ftajf = ftype fnajf;
-        if ftpdb == 'dir' then
-            Warning twrite ['{} is directory', fnpdb];
-            continue;
-        endif
-        if ftpdb == 'other' then
-            Warning twrite ['file type of {} is other', fnpdb];
-            continue;
-        endif
-        if ftajf == 'dir' then
-            Warning twrite ['{} is directory', fnajf];
-            continue;
-        endif
-        if ftajf == 'other' then
-            Warning twrite ['file type of {} is other', fnajf];
-            continue;
-        endif
-        if ftpdb == 'file' and ftajf == 'file' then
-            if not YesNo twrite ['{} and {} is already exists. overwrite?', fnpdb, fnajf] then
-                continue;
-            endif
-        elseif ftajf == 'file' then
-
-        elseif ftpdb == 'file' then
-            if not YesNo twrite ['{} is already exists. overwrite?', fnpdb] then
-                continue;
-            endif
-        elseif ftajf == 'file' then
-            if not YesNo twrite ['{} is already exists. overwrite?', fnajf] then
-                continue;
-            endif
-        endif
-        break;
-    endloop
-    return prefix;
-endfunction
-
-
 function fmoe_fragmentation opts
     opts = tagcat [opts, [
         template: 'templates\\sample.ajf',
@@ -612,7 +564,9 @@ function fmoe_fragmentation opts
         fbase: 'test',
         pdb: 'tests\\temp\\test.pdb',
         ajf: 'tests\\temp\\test.ajf',
-        basis_set: '6-31g*'
+        basis_set: '6-31g*',
+        bda_id: 0,
+        baa_id: 0
     ]];
     print opts;
     Open opts.moe;
@@ -624,6 +578,15 @@ function fmoe_fragmentation opts
     local pdb_path = fopenw opts.pdb;
     local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
     fclose pdb_path;
+
+    // For manual fragmentation test.
+    // pretend to cut by BondPicker [].
+    if (opts.bda_id and opts.baa_id) then 
+        local bda = Atoms [] | aNumber Atoms [] == opts.bda_id;
+        local baa = Atoms [] | aNumber Atoms [] == opts.baa_id;
+        AddSplitBond [detached_bonds, [bda, baa]];
+        UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+    endif
     RenderTemplate [
         BASENAME: opts.fbase,
         TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
