@@ -1,5 +1,8 @@
 #svl
 
+global FMOE_BASISSET_DATA;
+function json_Read;
+
 function GetBasedir []
     local env = modenv [];
     return fpath env.filename;
@@ -21,4 +24,44 @@ function BatchBinarySearch [key, candidates]
     mask = candidates[rights] == key;
     rights | not mask = 0;
     return rights;
+endfunction
+
+
+local function loadBasisSetData []
+    if FMOE_BASISSET_DATA === [] then
+        local data = fcat [GetBasedir[], 'basisset.json'];
+        local json = freadb [data, 'line', 1000];
+        FMOE_BASISSET_DATA = first json_Read [cat json, []];
+    endif
+endfunction
+
+
+local function getBasisSetNames []
+    loadBasisSetData [];
+    return first untag FMOE_BASISSET_DATA;
+endfunction
+
+
+local function getBasisSetData name
+    loadBasisSetData [];
+    return tagget [FMOE_BASISSET_DATA, name];
+endfunction
+
+
+function GetNumberOfFunctions [basis, atoms]
+    // Functionals?
+    return app add apt tagget [getBasisSetData basis, aElement atoms];
+endfunction
+
+
+function GetProgramBasisSets ext
+    local data = fcat [GetBasedir[], 'basisset', tok_cat [ext ,'.json']];
+    if ftype data === 'file' then
+        local json = freadb [data, 'line', 1000];
+        local res = first json_Read [cat json, []];;
+        return [res.default, res.list];
+    else
+        local names = getBasisSetNames [];
+        return [[], tr [names, names]];
+    endif
 endfunction

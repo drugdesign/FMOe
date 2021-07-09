@@ -1,9 +1,11 @@
 #set title 'fmoe:fragmentation';
 
-function json_Read;
 function GetBasedir;
 function RenderTemplate;
 function BatchBinarySearch;
+function GetProgramBasisSets;
+function GetNumberOfFunctions;
+global FMOE_BASISSET_DATA;
 global fmoe_templates;
 
 
@@ -101,53 +103,6 @@ global function FMOFragmentation chains
     local terms = cat (frags | IsCTerminalFragment frags);
     local mask = not app orE app cat apt eqE [bonds, [[terms]]];
     return bonds | mask;
-endfunction
-
-
-global FMOE_BASISSET_DATA;
-
-
-local function LoadBasisSetData []
-    // TODO:   
-    if FMOE_BASISSET_DATA === [] then
-        local data = fcat [GetBasedir[], 'basisset.json'];
-        local json = freadb [data, 'line', 1000];
-        FMOE_BASISSET_DATA = first json_Read [cat json, []];
-    endif
-endfunction
-
-
-local function GetBasisSetNames []
-    // ?
-    LoadBasisSetData [];
-    return first untag FMOE_BASISSET_DATA;
-endfunction
-
-
-local function GetProgramBasisSets ext
-    // ?
-    local data = fcat [GetBasedir[], 'basisset', tok_cat [ext ,'.json']];
-    if ftype data === 'file' then
-        local json = freadb [data, 'line', 1000];
-        local res = first json_Read [cat json, []];;
-        return [res.default, res.list];
-    else
-        local names = GetBasisSetNames [];
-        return [[], tr [names, names]];
-    endif
-endfunction
-
-
-local function GetBasisSetData name
-    // ?
-    LoadBasisSetData [];
-    return tagget [FMOE_BASISSET_DATA, name];
-endfunction
-
-
-local function GetNumberOfFunctions [basis, atoms]
-    // Functionals?
-    return app add apt tagget [GetBasisSetData basis, aElement atoms];
 endfunction
 
 
