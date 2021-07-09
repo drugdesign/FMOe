@@ -7,6 +7,7 @@ function GetProgramBasisSets;
 function GetNumberOfFunctions;
 function GetFragmentationPanel;
 function AbinitMpFilePrompt;
+function GetTemplates;
 global FMOE_BASISSET_DATA;
 global fmoe_templates;
 
@@ -105,18 +106,6 @@ global function FMOFragmentation chains
     local terms = cat (frags | IsCTerminalFragment frags);
     local mask = not app orE app cat apt eqE [bonds, [[terms]]];
     return bonds | mask;
-endfunction
-
-
-local function GetTemplates path
-    // :path: templates directory path
-    // return: List[str]
-    local templates = ftail flist path;
-    if length templates > 1 then
-        return templates | not eqE [templates, 'sample.ajf'];
-    else
-        return templates;
-    endif
 endfunction
 
 

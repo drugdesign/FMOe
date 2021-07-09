@@ -65,3 +65,15 @@ function GetProgramBasisSets ext
         return [[], tr [names, names]];
     endif
 endfunction
+
+
+function GetTemplates path
+    // :path: templates directory path
+    // return: List[str]
+    local templates = ftail flist path;
+    if length templates > 1 then
+        return templates | not eqE [templates, 'sample.ajf'];
+    else
+        return templates;
+    endif
+endfunction
