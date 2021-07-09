@@ -1,21 +1,10 @@
 #set title 'fmoe:fragmentation';
 
 function json_Read;
+function GetBasedir;
+function RenderTemplate;
+function BatchBinarySearch;
 global fmoe_templates;
-
-local function basedir []
-    local env = modenv [];
-    return fpath env.filename;
-endfunction
-
-
-local function getRendererPath []
-    // Template renderer binary path.
-    local exe = fcat [basedir[], 'bin', tok_cat ['fill_template.', MOE_ARCH, '.exe']];
-    if ftype exe === 'file' then
-        return exe;
-    endif
-endfunction
 
 
 local function DetachMarker [color, bonds]
@@ -94,24 +83,6 @@ local function StripBondExtra bonds
 endfunction
 
 
-local function BatchBinarySearch [key, candidates]
-    // :key:
-    // :candidates: sorted items 
-    local lefts = zero key;
-    local rights = (length candidates + 1) * one key;
-
-    while orE ((rights - lefts) > 1) loop
-        local mid = floor (lefts + (rights - lefts) / 2);
-        local mask = candidates[mid] >= key;
-        rights | mask = mid | mask;
-        lefts | not mask = mid | not mask;
-    endloop
-    mask = candidates[rights] == key;
-    rights | not mask = 0;
-    return rights;
-endfunction
-
-
 global function PartitionAtoms [atoms, bonds]
     local satoms = sort atoms;
     local nbr = BondGraph satoms;
@@ -139,7 +110,7 @@ global FMOE_BASISSET_DATA;
 local function LoadBasisSetData []
     // TODO:   
     if FMOE_BASISSET_DATA === [] then
-        local data = fcat [basedir[], 'basisset.json'];
+        local data = fcat [GetBasedir[], 'basisset.json'];
         local json = freadb [data, 'line', 1000];
         FMOE_BASISSET_DATA = first json_Read [cat json, []];
     endif
@@ -155,7 +126,7 @@ endfunction
 
 local function GetProgramBasisSets ext
     // ?
-    local data = fcat [basedir[], 'basisset', tok_cat [ext ,'.json']];
+    local data = fcat [GetBasedir[], 'basisset', tok_cat [ext ,'.json']];
     if ftype data === 'file' then
         local json = freadb [data, 'line', 1000];
         local res = first json_Read [cat json, []];;
@@ -691,23 +662,6 @@ global function fwrite_abinitmp_pdb [f, chains]
 endfunction
 
 
-local function renderTemplate env
-    env = tagcat [env, [
-        renderer: getRendererPath[]
-    ]];
-    local pkey = exe_open_shell [env.renderer, [], env];
-    while exe_status pkey loop
-        sleep 0.01;
-    endloop
-    if exe_exitcode pkey <> 0 then
-        local line;
-        for line in freadb [exe_stderr pkey, 'line', 50] loop
-            fwrite ['*cli*', '{}\n', line];
-        endloop
-    endif
-endfunction
-
-
 local function AbinitMpFragmentFormat l
     local result = [];
     while length l >= 10 loop
@@ -812,7 +766,7 @@ function fmoe_fragmentation opts
     local pdb_path = fopenw opts.pdb;
     local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
     fclose pdb_path;
-    renderTemplate [
+    RenderTemplate [
         BASENAME: opts.fbase,
         TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
         NUM_FRAGS: totok length *fragments,
@@ -834,7 +788,7 @@ global function FMOEFragmentationGUI[]
 
     // fmoe_templates is a globaal variable.
     if fmoe_templates == '' then
-        fmoe_templates = fcat [basedir[], 'templates'];
+        fmoe_templates = fcat [GetBasedir[], 'templates'];
     endif
     local templates = GetTemplates fmoe_templates;
 
@@ -936,12 +890,12 @@ global function FMOEFragmentationGUI[]
                             BASIS_SET: values.select_basisset,
                             ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
                         ];
-                        renderTemplate tagcat [envTemplate, [
+                        RenderTemplate tagcat [envTemplate, [
                             TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
                             OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf']]
                         ];
                         if (WindowGetData [wkey, ['gen_job']]).gen_job then
-                            renderTemplate tagcat [envTemplate, [
+                            RenderTemplate tagcat [envTemplate, [
                                 TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
                                 OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh']]
                         ];

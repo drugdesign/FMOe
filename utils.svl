@@ -1,0 +1,24 @@
+#svl
+
+function GetBasedir []
+    local env = modenv [];
+    return fpath env.filename;
+endfunction
+
+
+function BatchBinarySearch [key, candidates]
+    // :key:
+    // :candidates: sorted items 
+    local lefts = zero key;
+    local rights = (length candidates + 1) * one key;
+
+    while orE ((rights - lefts) > 1) loop
+        local mid = floor (lefts + (rights - lefts) / 2);
+        local mask = candidates[mid] >= key;
+        rights | mask = mid | mask;
+        lefts | not mask = mid | not mask;
+    endloop
+    mask = candidates[rights] == key;
+    rights | not mask = 0;
+    return rights;
+endfunction
