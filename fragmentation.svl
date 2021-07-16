@@ -217,15 +217,74 @@ local function AssignAtomsToFragments [atoms, fragments]
 endfunction
 
 
-local function RefreshWindow [wkey, basisset, detached_bonds, fragments]
-    local [bda, baa] = tr StripBondExtra detached_bonds;
-    WindowSetAttr [wkey, [
-        detached_bond_list: [text: FormatDetachedBonds detached_bonds],
-        fragment_list: [text: FormatFragments [basisset, fragments,
-            AssignAtomsToFragments [bda, fragments],
-            AssignAtomsToFragments [baa, fragments]]
-        ]
+local function mergeFragments [fragments, merge_list]
+    // merge_list element should be sorted.
+    // print fragments;
+    local data = [];
+    local i, j;
+    local map = igen length fragments;
+
+    for i = 1, length merge_list loop
+        for j = 2, length merge_list(i) loop
+            map[merge_list(i)(j)] = merge_list(i)(1);
+        endloop
+    endloop
+
+    for i = 1, length map loop
+        data = tagpoke [data, totok map(i) , cat [tagpeek [data, totok map(i)], fragments(i)]];
+    endloop
+    return tagvals data;
+endfunction
+
+
+local function formatMergeList merge_list
+    // :bonds:
+    // return: 
+    // TODO: check duplicate
+    local data = [];
+    local i, j;
+    for i = 1, length merge_list loop
+        for j = 1, length merge_list(i) loop
+            data = cat [data, [[i, merge_list(i)(j)]]];
+        endloop
+    endloop
+    return apt twrite [
+        '{}\t{}\t{}',
+        igen length first tr data,
+        first tr data,
+        second tr data
+    ];
+endfunction
+
+
+local function RefreshWindow [wkey, basisset, detached_bonds, fragments, opts]
+    opts = tagcat [opts, [
+        merge: 0,
+        merge_list: [],
+        merged_fragments: []
     ]];
+    local [bda, baa] = tr StripBondExtra detached_bonds;
+    local detached_bond_list = FormatDetachedBonds detached_bonds;
+    local fragment_list = FormatFragments [basisset, fragments,
+        AssignAtomsToFragments [bda, fragments],
+        AssignAtomsToFragments [baa, fragments]];
+    
+    if opts.merge then
+        WindowSetAttr [wkey, [
+            detached_bond_list: [text: detached_bond_list],
+            fragment_list: [text: fragment_list],
+            merge_list: [text: formatMergeList opts.merge_list],
+            merged_fragment_list: [text: FormatFragments [basisset, opts.merged_fragments,
+                AssignAtomsToFragments [bda, opts.merged_fragments],
+                AssignAtomsToFragments [baa, opts.merged_fragments]]
+            ]
+        ]];
+    else
+        WindowSetAttr [wkey, [
+            detached_bond_list: [text: detached_bond_list],
+            fragment_list: [text: fragment_list]
+        ]];
+    endif
 endfunction
 
 
@@ -567,7 +626,6 @@ function fmoe_fragmentation opts
     local pdb_path = fopenw opts.pdb;
     local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
     fclose pdb_path;
-
     // For manual fragmentation test.
     // pretend to cut by BondPicker [].
     if (opts.bda_id and opts.baa_id) then 
@@ -590,14 +648,16 @@ endfunction
 
 
 global function FMOEFragmentationGUI opts
-    opts = tagcat [opts,
-        [test: '']
-    ];
+    opts = tagcat [opts, [
+        test: '', 
+        merge: 0,
+        merge_list: []
+    ]];
 
     local quit = dvar_open [];
     dvar_lock quit;
 
-    local wkey = WindowCreate GetFragmentationPanel [];
+    local wkey = WindowCreate GetFragmentationPanel opts;
     WindowShow wkey;
 
     // fmoe_templates is a globaal variable.
@@ -614,7 +674,8 @@ global function FMOEFragmentationGUI opts
     AutoSplitBonds [detached_bonds, chains];  // slow
     UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];  // slow
     // TODO: remove the hard coding, i.e. '6-31g'.
-    RefreshWindow [wkey, '6-31g*', *detached_bonds, *fragments];
+    opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+    RefreshWindow [wkey, '6-31g*', *detached_bonds, *fragments, opts];
 
     // TODO: rename select_template more acculately.
     WindowSetAttr [wkey, [select_template: [text: templates]]];
@@ -639,15 +700,17 @@ global function FMOEFragmentationGUI opts
             // TODO: neccessary for more precise treatment of a reference variable(fragments).
             // TODO: chains should be reset.
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
             // TODO: second varibles should be more understandable. 
-            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
+            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments, opts];
             continue;
         endif
 
         if trigger === 'reset' then
             RemoveAllBonds detached_bonds;
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
-            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments, opts];
             continue;
         endif
         
@@ -655,13 +718,15 @@ global function FMOEFragmentationGUI opts
             // naming? Indices? not Pointer or Key?
             RemoveBondsByIndices [detached_bonds, first values.detached_bond_list];
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
-            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments, opts];
             continue;
         endif
         
         if trigger === 'refresh' then
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
-            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments, opts];
             continue;
         endif
         
@@ -672,13 +737,14 @@ global function FMOEFragmentationGUI opts
             endif
             AddSplitBond [detached_bonds, [bda, baa]];
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
-            RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments, opts];
             continue;
         endif
         
         if trigger === 'select_basisset' then
             // ?
-            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments];
+            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments, opts];
             continue;
         endif
         
@@ -704,7 +770,7 @@ global function FMOEFragmentationGUI opts
         
         if trigger === 'fmoe_fragmentation' then
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
-
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
             // Check the selected template is an ajf file.
             if not (fext values.select_template === 'ajf') then
                 Warning twrite ['unknown template extension: {}', fext values.select_template];
@@ -732,11 +798,21 @@ global function FMOEFragmentationGUI opts
             local envTemplate = [
                 BASENAME: ftail path_prefix,
                 TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
-                NUM_FRAGS: totok length *fragments,
-                BASIS_SET: values.select_basisset,
-                ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
+                BASIS_SET: values.select_basisset
             ];
-
+            
+            if opts.merge then
+                envTemplate = tagcat [envTemplate, [
+                    NUM_FRAGS: totok length opts.merged_fragments,
+                    ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, opts.merged_fragments, *detached_bonds]
+                ]];
+            else
+                envTemplate = tagcat [envTemplate, [
+                    NUM_FRAGS: totok length *fragments,
+                    ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
+                ]];
+            endif
+            
             // Render ajf file.
             RenderTemplate tagcat [envTemplate, [
                 TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
@@ -765,5 +841,12 @@ local function main opts
     if opts.test == 'fragmentation_gui' then
         Open opts.moe;
         FMOEFragmentationGUI opts;
+    endif
+    if opts.test == 'merge' then
+        print formatMergeList opts.merge_list;
+    endif
+    if opts.test == 'merge_fragments' then
+        local merge_list = [[1,2,3], [4,5,6]];
+        print formatMergeList opts.merge_list;
     endif
 endfunction
