@@ -767,7 +767,48 @@ global function FMOEFragmentationGUI opts
             ]];
             continue;
         endif
+
+        if trigger === 'merge_list' then
+            aSetSelected [Atoms[], 0];
+            print first values.merge_list;
+            print opts.merge_list;
+            aSetSelected [cat (*fragments)[third tr values.merge_list], 1];
+            continue;
+        endif
+
+        if trigger === 'merged_fragment_list' then
+            aSetSelected [Atoms[], 0];
+            aSetSelected [cat opts.merged_fragments[first values.merged_fragment_list], 1];
+            continue;
+        endif
+
+        if trigger === 'add_merge' then
+            opts.merge_list = cat [opts.merge_list, [first values.fragment_list]];
+            UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments, opts];
+            continue;
+        endif
+
+        if trigger === 'remove_merge' then
+            local index = second values.merge_list;
+            local mask = one igen length opts.merge_list;
+            mask(index) = 0;
+            opts.merge_list = opts.merge_list | mask;
+            UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments, opts];
+            continue;
+        endif
         
+        if trigger === 'reset_merge' then
+            opts.merge_list = [];
+            UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments, opts];
+            continue;
+        endif
+
         if trigger === 'fmoe_fragmentation' then
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];

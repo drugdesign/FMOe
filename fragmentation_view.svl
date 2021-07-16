@@ -216,9 +216,21 @@ const MERGE_PANEL = [
                 name: 'add_merge',
                 text: '+',
                 font: 'largeFixedBold'
+            ],
+            Button: [
+                name: 'remove_merge',
+                text: '-',
+                font: 'largeFixedBold',
+                foreground: 'red'
+            ],
+            Button: [
+                name: 'reset_merge',
+                text: '0',
+                font: 'largeFixedBold'
             ]
         ],
         Listbox: [
+            // TODO: rename  
             name: 'merge_list',
             header: '#{+4n}\tmerge_id{+10t}\tfrag_id{+10n}',
             headerBubbleHelp: tok_cat [
@@ -227,7 +239,7 @@ const MERGE_PANEL = [
                 'Fragment Id: fragment id\n'
             ],
             onTrigger: 'return',
-            multiSelect: 2,
+            multiSelect: 0,
             extendV: 1,
             resizeV: 1,
             extendH: 1,
