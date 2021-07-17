@@ -8,6 +8,7 @@ function GetNumberOfFunctions;
 function GetFragmentationPanel;
 function AbinitMpFilePrompt;
 function GetTemplates;
+function LoadAutofrag;
 global FMOE_BASISSET_DATA;
 global fmoe_templates;
 
@@ -651,7 +652,9 @@ global function FMOEFragmentationGUI opts
     opts = tagcat [opts, [
         test: '', 
         merge: 0,
-        merge_list: []
+        merge_list: [],
+        autofrag: 0,
+        autofrag_svlb: ""
     ]];
 
     local quit = dvar_open [];
@@ -708,6 +711,27 @@ global function FMOEFragmentationGUI opts
 
         if trigger === 'reset' then
             RemoveAllBonds detached_bonds;
+            UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments, opts];
+            continue;
+        endif
+
+        if trigger === 'load_autofrag' then
+            RemoveAllBonds detached_bonds;
+            opts.AUTOFRAG_PATH = FilePrompt [title: 'open autofrag log', mode: 'open'];
+            if opts.AUTOFRAG_PATH === [] then
+                continue;
+            endif
+            local [bda_autofrag, baa_autofrag] = LoadAutofrag opts;
+            local raw_bonds = tr [
+                apt mget [[cat cAtoms chains], eqE [bda_autofrag, [aNumber cat cAtoms chains]]],
+                apt mget [[cat cAtoms chains], eqE [baa_autofrag, [aNumber cat cAtoms chains]]]
+            ];
+            *detached_bonds = cat [
+                *detached_bonds,
+                apt cat [raw_bonds, 'A', DrawDetachMarker [first cTag chains, 0xffffff, raw_bonds]]
+            ];
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
             RefreshWindow [wkey, tagget [aliases, values.select_basisset], *detached_bonds, *fragments, opts];

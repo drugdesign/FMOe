@@ -7,6 +7,12 @@ const MAIN_PANEL = [
     text: 'Generate',
     Vbox: [
         Hbox: [
+            Button: [
+                name: 'load_autofrag',
+                text: 'load_autofrag'
+            ]
+        ],
+        Hbox: [
             Label: [
                 text: 'Bonds',
                 extendH: 1,
@@ -117,6 +123,12 @@ const MERGE_PANEL = [
     windowName: 'FMOEFragmentation',
     text: 'Generate',
     Vbox: [
+        Hbox: [
+            Button: [
+                name: 'load_autofrag',
+                text: 'load_autofrag'
+            ]
+        ],
         Hbox: [
             Label: [
                 text: 'Bonds',

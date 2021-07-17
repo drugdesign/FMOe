@@ -11,6 +11,10 @@ test_view:
 test_view_merge:
 	moe.exe -exec "run ['../fragmentation.svl', [test: 'fragmentation_gui', moe: 'resources\\\\\\test.moe', merge: 1, merge_list: [[1,2], [3,4,5]]]]"
 
+.PHONY: test_view_autofrag
+test_view_autofrag:
+	moe.exe -exec "run ['../fragmentation.svl', [test: 'fragmentation_gui', moe: 'autofrag.pdb', autofrag: 1, autofrag_svlb: 'autofrag.svlb']]"
+
 .PHONY: test_merge
 test_merge:
 	moe.exe -exec "run ['../fragmentation.svl', [test: 'merge', merge_list: []]]"
