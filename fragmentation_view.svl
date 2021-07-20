@@ -307,10 +307,184 @@ const MERGE_PANEL = [
 ];
 
 
+const HYBRID_PANEL = [
+    name: 'fmoe_fragmentation',
+    title: 'FMOE Fragmentation',
+    windowName: 'FMOEFragmentation',
+    text: 'Generate',
+    Vbox: [
+        Hbox: [
+            Button: [
+                name: 'load_autofrag',
+                text: 'load_autofrag'
+            ]
+        ],
+        Listbox: [
+            name: 'detached_bond_list',
+            header: '#{+4n}\tT{-1t}\tBDA{+11t}\tBAA{+11t}',
+            headerBubbleHelp: tok_cat [
+                '#: index\n',
+                'T: bond split type\n',
+                '   A: auto\n',
+                '   M: manual\n',
+                'Res.: residue name\n',
+                'BDA: bond detached atom\n',
+                'BAA: bond attached atom'],
+            onTrigger: 'return',
+            multiSelect: 2,
+            extendV: 1,
+            resizeV: 1,
+            extendH: 1,
+            resizeH: 1,
+            type: 'int',
+            sortEnable: 1,
+            len: 10,
+            width: 37
+        ],
+        Hbox: [
+            Label: [
+                text: 'Fragments',
+                extendH: 1,
+                resizeH: 1
+            ],
+            Option: [
+                name: 'select_basisset',
+                onTrigger: 'return',
+                extendH: 1,
+                resizeH: 1
+            ],
+            Button: [
+                text: 'refresh',
+                name: 'refresh'
+            ]
+        ],
+        Listbox: [
+            name: 'fragment_list',
+            header: '#{+4n}\tRes.{+6t}\tnA{+3n}\tAO{+3n}\tD{+2n}\tA{+2n}\tC{+2n}',
+            headerBubbleHelp: tok_cat [
+                '#: index\n',
+                'Res.: majour residue\n',
+                'nA: fragment atom count\n',
+                'AO: fragment atomic orbital count\n',
+                'D: number of detached electron pairs\n',
+                'A: number of attached electron pairs\n',
+                'C: fragment formal charge'
+            ],
+            onTrigger: 'return',
+            multiSelect: 2,
+            extendV: 1,
+            resizeV: 1,
+            extendH: 1,
+            resizeH: 1,
+            type: 'int',
+            sortEnable: 1,
+            len: 10,
+            width: 42
+        ],
+        Hbox: [
+            Label: [
+                text: 'Additional Bonds',
+                extendH: 1,
+                resizeH: 1
+            ],
+            Button: [
+                name: 'add_additional_bond',
+                text: '+',
+                font: 'largeFixedBold'
+            ],
+            Button: [
+                name: 'remove_additional_bond',
+                text: '-',
+                font: 'largeFixedBold',
+                foreground: 'red'
+            ],
+            Button: [
+                name: 'reset_additional_bonds',
+                text: '0',
+                font: 'largeFixedBold'
+            ]
+        ],
+        Listbox: [
+            name: 'additional_bond_list',
+            header: '#{+4n}\tT{-1t}\tBDA{+11t}\tBAA{+11t}',
+            headerBubbleHelp: tok_cat [
+                '#: index\n',
+                'T: bond split type\n',
+                '   A: auto\n',
+                '   M: manual\n',
+                'Res.: residue name\n',
+                'BDA: bond detached atom\n',
+                'BAA: bond attached atom'],
+            onTrigger: 'return',
+            multiSelect: 2,
+            extendV: 1,
+            resizeV: 1,
+            extendH: 1,
+            resizeH: 1,
+            type: 'int',
+            sortEnable: 1,
+            len: 10,
+            width: 37
+        ],
+        Hbox: [
+            Label: [
+                text: 'Hybrid Fragments',
+                extendH: 1,
+                resizeH: 1
+            ]
+        ],
+        Listbox: [
+            name: 'hybrid_fragment_list',
+            header: '#{+4n}\tRes.{+6t}\tnA{+3n}\tAO{+3n}\tD{+2n}\tA{+2n}\tC{+2n}',
+            headerBubbleHelp: tok_cat [
+                '#: index\n',
+                'Res.: majour residue\n',
+                'nA: fragment atom count\n',
+                'AO: fragment atomic orbital count\n',
+                'D: number of detached electron pairs\n',
+                'A: number of attached electron pairs\n',
+                'C: fragment formal charge'
+            ],
+            onTrigger: 'return',
+            multiSelect: 2,
+            extendV: 1,
+            resizeV: 1,
+            extendH: 1,
+            resizeH: 1,
+            type: 'int',
+            sortEnable: 1,
+            len: 10,
+            width: 42
+        ],
+        Hbox: [
+            Label: [text: 'Ligand Charge'],
+            Text: [
+                type: 'token',
+                name: 'ligand_charge'
+            ]
+        ],
+        Checkbox : [
+                name: 'gen_job',
+                text: ['generate .sh file'] 
+            ],
+        Hbox: [
+            Label: [text: 'template:'],
+            Option: [
+                name: 'select_template',
+                extendH: 1,
+                resizeH: 1
+            ]
+        ]
+    ]
+];
+
 function GetFragmentationPanel opts
     opts = tagcat [opts, [
         merge: 0
     ]];
+    if opts.hybrid then
+        return HYBRID_PANEL;
+    endif
     if opts.merge then 
         return MERGE_PANEL;
     endif

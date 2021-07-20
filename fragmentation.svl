@@ -262,7 +262,8 @@ local function RefreshWindow [wkey, basisset, detached_bonds, fragments, opts]
     opts = tagcat [opts, [
         merge: 0,
         merge_list: [],
-        merged_fragments: []
+        merged_fragments: [],
+        additional_bonds: []
     ]];
     local [bda, baa] = tr StripBondExtra detached_bonds;
     local detached_bond_list = FormatDetachedBonds detached_bonds;
@@ -280,6 +281,18 @@ local function RefreshWindow [wkey, basisset, detached_bonds, fragments, opts]
                 AssignAtomsToFragments [baa, opts.merged_fragments]]
             ]
         ]];
+    elseif opts.hybrid then
+        WindowSetAttr [wkey, [
+            detached_bond_list: [text: detached_bond_list],
+            fragment_list: [text: fragment_list],
+            additional_bond_list: [text: FormatDetachedBonds opts.additional_bonds],
+            hybrid_fragment_list:  [text: FormatFragments [basisset, opts.hybrid_fragments,
+                AssignAtomsToFragments [bda, opts.hybrid_fragments],
+                AssignAtomsToFragments [baa, opts.hybrid_fragments]]
+            ]
+        ]];
+
+
     else
         WindowSetAttr [wkey, [
             detached_bond_list: [text: detached_bond_list],
@@ -653,8 +666,9 @@ global function FMOEFragmentationGUI opts
         test: '', 
         merge: 0,
         merge_list: [],
-        autofrag: 0,
-        autofrag_svlb: ""
+        autofrag: '',
+        autofrag_svlb: '',
+        hybrid: 0
     ]];
 
     local quit = dvar_open [];
@@ -671,13 +685,34 @@ global function FMOEFragmentationGUI opts
 
     local detached_bonds = dvar_open [];
     local fragments = dvar_open [];
+    local additional_bonds = dvar_open [];
 
     local chains = Chains[];
 
-    AutoSplitBonds [detached_bonds, chains];  // slow
+    if opts.autofrag == '' then 
+        AutoSplitBonds [detached_bonds, chains];  // slow
+    else
+        opts.AUTOFRAG_PATH = opts.autofrag;
+        local [bda_autofrag, baa_autofrag] = LoadAutofrag opts;
+        local raw_bonds = tr [
+            apt mget [[cat cAtoms chains], eqE [bda_autofrag, [aNumber cat cAtoms chains]]],
+            apt mget [[cat cAtoms chains], eqE [baa_autofrag, [aNumber cat cAtoms chains]]]
+        ];
+        if opts.hybrid then
+            *detached_bonds = cat [
+                *detached_bonds,
+                apt cat [raw_bonds, 'A', DrawDetachMarker [first cTag chains, 0xff8080, raw_bonds]]
+            ];
+        else
+            *detached_bonds = cat [
+                *detached_bonds,
+                apt cat [raw_bonds, 'A', DrawDetachMarker [first cTag chains, 0xffffff, raw_bonds]]
+            ];
+        endif
+    endif
     UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];  // slow
     // TODO: remove the hard coding, i.e. '6-31g'.
-    opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+    opts.merged_fragments = mergeFragments [*fragments, opts.merge_list]; 
     RefreshWindow [wkey, '6-31g*', *detached_bonds, *fragments, opts];
 
     // TODO: rename select_template more acculately.
@@ -723,8 +758,8 @@ global function FMOEFragmentationGUI opts
             if opts.AUTOFRAG_PATH === [] then
                 continue;
             endif
-            local [bda_autofrag, baa_autofrag] = LoadAutofrag opts;
-            local raw_bonds = tr [
+            [bda_autofrag, baa_autofrag] = LoadAutofrag opts;
+            raw_bonds = tr [
                 apt mget [[cat cAtoms chains], eqE [bda_autofrag, [aNumber cat cAtoms chains]]],
                 apt mget [[cat cAtoms chains], eqE [baa_autofrag, [aNumber cat cAtoms chains]]]
             ];
@@ -833,6 +868,26 @@ global function FMOEFragmentationGUI opts
             continue;
         endif
 
+        if trigger === 'add_additional_bond' then
+            [bda, baa] = BondPicker [];
+            if not (bda and baa) then
+                continue;
+            endif
+            AddSplitBond [additional_bonds, [bda, baa]];
+            //UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
+            //opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            opts.additional_bonds = *additional_bonds;
+            bda = first tr *additional_bonds;
+            baa = second tr *additional_bonds;
+            local additional_atoms = uniq cat [bda, baa];
+            local target_mask = app length AssignAtomsToFragments [additional_atoms, *fragments];
+            opts.target_fragment_id = igen length *fragments | target_mask;
+            opts.target_atoms = cat (*fragments | target_mask);
+            opts.hybrid_fragments = PartitionAtoms [opts.target_atoms, opts.additional_bonds];
+            RefreshWindow [wkey, tagget [aliases,  values.select_basisset], *detached_bonds, *fragments, opts];
+            continue;
+        endif
+
         if trigger === 'fmoe_fragmentation' then
             UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
             opts.merged_fragments = mergeFragments [*fragments, opts.merge_list];
@@ -859,17 +914,28 @@ global function FMOEFragmentationGUI opts
             local w_atoms = fwrite_abinitmp_pdb [pdb_file, chains];
             fclose pdb_file;
             
+            if values.ligand_charge == '' then
+                values.ligand_charge = 'None';
+            endif
 
             local envTemplate = [
                 BASENAME: ftail path_prefix,
                 TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
-                BASIS_SET: values.select_basisset
+                BASIS_SET: values.select_basisset,
+                LIGAND_CHARGE: values.ligand_charge
             ];
             
             if opts.merge then
                 envTemplate = tagcat [envTemplate, [
                     NUM_FRAGS: totok length opts.merged_fragments,
                     ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, opts.merged_fragments, *detached_bonds]
+                ]];
+            elseif opts.hybrid then
+                envTemplate = tagcat [envTemplate, [
+                    NUM_FRAGS: totok length opts.hybrid_fragments,
+                    ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, opts.hybrid_fragments, opts.additional_bonds],
+                    HYBRID_FRAG: twrite ['{|,}', opts.target_fragment_id],
+                    HYBRID_NF: totok length opts.target_fragment_id
                 ]];
             else
                 envTemplate = tagcat [envTemplate, [
@@ -913,5 +979,9 @@ local function main opts
     if opts.test == 'merge_fragments' then
         local merge_list = [[1,2,3], [4,5,6]];
         print formatMergeList opts.merge_list;
+    endif
+    if opts.test == 'hybrid' then
+        Open opts.moe;
+        FMOEFragmentationGUI opts;
     endif
 endfunction
