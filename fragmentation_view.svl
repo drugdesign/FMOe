@@ -298,6 +298,13 @@ const MERGE_PANEL = [
             len: 10,
             width: 42
         ],
+        Hbox: [
+            Label: [text: 'Ligand Charge'],
+            Text: [
+                type: 'token',
+                name: 'ligand_charge'
+            ]
+        ],
         Checkbox : [
                 name: 'gen_job',
                 text: ['generate .sh file'] 
