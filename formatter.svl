@@ -2,20 +2,23 @@
 
 function AssignAtomsToFragments;
 function GetNumberOfFunctions;
-function StripBondExtra;
 
 function FormatDetachedBonds bonds
-    // :bonds:
-    // return: 
-    // TODO: move to model
+    // :bonds: List[fmoe_bond]
+    // :return:
     local bda = first tr bonds;
     local baa = second tr bonds;
     local types = third tr bonds;
     return apt twrite [
         '{}\t{}\t{}{} {}\t{}{} {}',
-        igen length bonds, types,
-        rName aResidue bda, rUID aResidue bda, aName bda,
-        rName aResidue baa, rUID aResidue baa, aName baa
+        igen length bonds, 
+        types,
+        rName aResidue bda, 
+        rUID aResidue bda, 
+        aName bda,
+        rName aResidue baa, 
+        rUID aResidue baa, 
+        aName baa
     ];
 endfunction
 
@@ -27,10 +30,10 @@ function FormatAtomName [atom]
     endif
 endfunction
 
+
 function FormatMergeList merge_list
-    // :bonds:
-    // return: 
-    // TODO: check duplicate
+    // :merge_list:
+    // :return: 
     local data = [];
     local i, j;
     for i = 1, length merge_list loop
@@ -46,70 +49,85 @@ function FormatMergeList merge_list
     ];
 endfunction
 
-local function AbinitMpFragmentFormat l
-    local result = [];
-    while length l >= 10 loop
-        result = append [result, tok_cat apt twrite ['{n:8}', keep [l, 10]]];
-        l = drop [l, 10];
+
+local function wrapForAbinitMp elements
+    // Wrap elements by 10 for FRAGMENT section in an ajf file. 
+    local lines = [];
+    while length elements >= 10 loop
+        lines = append [lines, tok_cat apt twrite ['{n:8}', keep [elements, 10]]];
+        elements = drop [elements, 10];
     endloop
-    if length l <> 0 then
-        result = append [result, tok_cat apt twrite ['{n:8}', l]];
+    if length elements <> 0 then
+        lines = append [lines, tok_cat apt twrite ['{n:8}', elements]];
     endif
-    return tok_cat droplast cat tr [result, '\n'];
+    return tok_cat droplast cat tr [lines, '\n'];
 endfunction
 
 
 function FormatAbinitMpFragment [atoms, fragments, detached_bonds]
-    // need to refactor
-    local [bda, baa] = tr StripBondExtra detached_bonds;
+    // :param atoms: List[atom]
+    // :param fragments: List[List[atom]]
+    // :param detached_bonds: List[fmoe_bond]
+    // :return: Fragment section for an ajf file.
+    local bda = first tr detached_bonds;
+    local baa = second tr detached_bonds;
     local detached = AssignAtomsToFragments [bda, fragments];
     local attached = AssignAtomsToFragments [baa, fragments];
     local atom_indices = app sort apt indexof [fragments, [atoms]];
 
     local rbaa = cat attached | cat (attached <> 0);
-    local [rbda, _] = StripBondExtra detached_bonds [indexof [rbaa, baa]];
+    local rbda = bda [indexof [rbaa, baa]];
 
     local ibda = indexof [rbda, atoms];
     local ibaa = indexof [rbaa, atoms];
-
+    local natoms = app length fragments;
+    local charges = app add aFCharge fragments + app length detached - app length attached;
+    local nbonds = app length attached;
     return twrite ['&FRAGMENT\n{}\n{}\n{}\n{}\n{}\n/',
-        AbinitMpFragmentFormat app length fragments,
-        AbinitMpFragmentFormat (app add aFCharge fragments + app length detached - app length attached),
-        AbinitMpFragmentFormat (app length attached),
-        tok_cat droplast cat tr [app AbinitMpFragmentFormat atom_indices, '\n'],
-        tok_cat droplast cat tr [apt AbinitMpFragmentFormat [ibda, ibaa], '\n']
+        wrapForAbinitMp natoms,
+        wrapForAbinitMp charges,
+        wrapForAbinitMp nbonds,
+        tok_cat droplast cat tr [app wrapForAbinitMp atom_indices, '\n'],
+        tok_cat droplast cat tr [apt wrapForAbinitMp [ibda, ibaa], '\n']
     ];
 endfunction
 
 
-local function Common t
-    // ?
-    if t === [] then
+local function getMostFrequent nested_list
+    // get most frequent item in each element as a list.
+    // :param nested_list: e.g. [['HOH', 'HOH', 'NA'], ['Glu', 'Glu'], ['Ala', 'Ala', 'Glu']]
+    // :return: e.g. ['HOH', 'Glu', 'Ala']
+    if nested_list === [] then
         return [];
     endif
-    if isflat t then
-        t = [t];
+    if isflat nested_list then
+        nested_list = [nested_list];
     endif
-    local cand = app uniq t;
-    local freq = apt freq [cand, t];
+    local cand = app uniq nested_list;
+    local freq = apt freq [cand, nested_list];
     return apt get [cand, app x_max freq];
 endfunction
 
 
 function FormatFragments [basisset, fragments, detached, attached]
-    // :basisset: 
-    // :fragments: List[List[atom]]
-    // :detached: List[atom]
-    // :attached: List[atom]
-    local res = Common rName aResidue fragments;
-    local resi = totok Common rUID aResidue fragments;
+    // :param basisset: basisset
+    // :param fragments: List[List[atom]]
+    // :param detached: List[atom]
+    // :param attached: List[atom]
+    // :return: token for a fragments table
+    local res = getMostFrequent rName aResidue fragments;
+    local resi = totok getMostFrequent rUID aResidue fragments;
     local nD = app length detached;
     local nA = app length attached;
 
     return apt twrite [
         '{}\t{}\t{}\t{}\t{}\t{}\t{}',
-        igen length fragments, apt tok_cat [res, resi], app length fragments,
+        igen length fragments, 
+        apt tok_cat [res, resi], 
+        app length fragments,
         GetNumberOfFunctions [basisset, apt cat [fragments, attached]],
-        nD, nA, app add aFCharge fragments + nD - nA
+        nD, 
+        nA, 
+        app add aFCharge fragments + nD - nA
     ];
 endfunction

@@ -122,14 +122,6 @@ local function RemoveAllBonds detached_bonds
 endfunction
 
 
-local function RemoveAutoBonds detached_bonds
-    local bonds = *detached_bonds;
-    local mask = third tr bonds == 'A';
-    GDestroy (tr (bonds | mask))(4);
-    *detached_bonds = bonds | not mask;
-endfunction
-
-
 local function RemoveBondsByIndices [detached_bonds, indices]
     local bonds = *detached_bonds;
     local mask = zero igen length bonds;
@@ -621,7 +613,7 @@ global function FMOEFragmentationGUI opts
         local [values, trigger] = WindowWait wkey;
 
         if trigger === 'auto' then
-            RemoveAutoBonds detached_bonds;
+            RemoveAllBonds detached_bonds;
             AutoSplitBonds [detached_bonds, chains];
             // TODO: neccessary for more precise treatment of a reference variable(fragments).
             // TODO: chains should be reset.
