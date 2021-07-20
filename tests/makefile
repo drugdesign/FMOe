@@ -1,6 +1,8 @@
 
 .PHONY: test
 test:
+	rm -rf temp ||:
+	mkdir temp
 	python test_fragmentation.py
 
 .PHONY: test_view

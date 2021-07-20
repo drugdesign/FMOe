@@ -101,6 +101,13 @@ const MAIN_PANEL = [
             len: 20,
             width: 42
         ],
+        Hbox: [
+            Label: [text: 'Ligand Charge'],
+            Text: [
+                type: 'token',
+                name: 'ligand_charge'
+            ]
+        ],
         Checkbox : [
                 name: 'gen_job',
                 text: ['generate .sh file'] 

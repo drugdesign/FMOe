@@ -7,6 +7,7 @@ function InitializeFMOe opts
     load fcat [path, 'TemplateRenderer.svl'];
     load fcat [path, 'utils.svl'];
     load fcat [path, 'prompts.svl'];
+    load fcat [path, 'formatter.svl'];
     load fcat [path, 'fragmentation_view.svl'];
     load fcat [path, 'autofrag2svl.svl'];
     load fcat [path, 'fragmentation.svl'];
