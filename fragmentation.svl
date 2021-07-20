@@ -450,7 +450,7 @@ local function AlertAtomDialog atoms
 endfunction
 
 
-global function fwrite_abinitmp_pdb_line [f, i, atom]
+global function fwrite_AbinitMpPdbLine [f, i, atom]
     local header = 'ATOM  ';
     if app orE apt eqE [rType aResidue atom, [['heme', 'none']]] then
         header = 'HETATM';
@@ -475,7 +475,7 @@ global function fwrite_abinitmp_pdb_line [f, i, atom]
 endfunction
 
 
-global function fwrite_abinitmp_pdb [f, chains]
+global function fwrite_AbinitMpPdb [f, chains]
     local chain, atom;
     local i = 0;
     local c = 0;
@@ -486,7 +486,7 @@ global function fwrite_abinitmp_pdb [f, chains]
             i = i + 1;
             indices(i) = atom;
 
-            fwrite_abinitmp_pdb_line [f, i, atom];
+            fwrite_AbinitMpPdbLine [f, i, atom];
         endloop
         if c == length chains then
             fwrite [f, 'END\n'];
@@ -518,7 +518,7 @@ function fmoe_fragmentation opts
     AutoSplitBonds [detached_bonds, chains];
     UpdateFragments [fragments, cat cAtoms chains, *detached_bonds];
     local pdb_path = fopenw opts.pdb;
-    local w_atoms = fwrite_abinitmp_pdb [pdb_path, chains];
+    local w_atoms = fwrite_AbinitMpPdb [pdb_path, chains];
     fclose pdb_path;
     // For manual fragmentation test.
     // pretend to cut by BondPicker [].
@@ -564,8 +564,9 @@ global function FMOEFragmentationGUI opts
     local templates = GetTemplates fmoe_templates;
 
     local detached_bonds = dvar_open [];
-    local fragments = dvar_open [];
     local additional_bonds = dvar_open [];
+
+    local fragments = dvar_open []; // maybe a nomal list goes.
 
     local chains = Chains[];
 
@@ -791,7 +792,7 @@ global function FMOEFragmentationGUI opts
 
             // Write PDB file.
             local pdb_file = fopenw tok_cat [path_prefix, '.pdb'];
-            local w_atoms = fwrite_abinitmp_pdb [pdb_file, chains];
+            local w_atoms = fwrite_AbinitMpPdb [pdb_file, chains];
             fclose pdb_file;
             
             if values.ligand_charge == '' then
