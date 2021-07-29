@@ -8,9 +8,6 @@ function InitializeFMOe opts
     app load flist fcat [path, 'fmoe', 'model'];
     app load flist fcat [path, 'fmoe', 'view'];
     app load flist fcat [path, 'fmoe', 'presenter'];
-    load fcat [path, 'TemplateRenderer.svl'];
-    load fcat [path, 'fragmentation_view.svl'];
-    load fcat [path, 'autofrag2svl.svl'];
     load fcat [path, 'fragmentation.svl'];
     load fcat [path, 'visualization.svl'];
     ReadMenuFile fcat [path, 'fmoe', 'menu.svl'];
