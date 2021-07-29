@@ -158,6 +158,31 @@ function AssignAtomsToFragments [atoms, fragments]
 endfunction
 
 
+local function appendMergeList [merge_list, merge_element]
+    // merge_list: [[iFragmA, iFragmB], [iFragmC, iFragmD, ...], [...]]
+    // merge_element: additional fragment list. e.g. [iFragmD, iFragmE]
+    local result = cat [merge_list, merge_element];
+    local elements;
+    local i;
+    local m;
+    loop
+        if not add (m_uniq cat result == 0) then 
+            break; 
+        endif
+        elements = sort uniq cat result;
+        for i = 1, length elements loop
+            m = app orE (result == elements(i));
+            if add m > 1 then
+                result = cat [[sort uniq cat (result | m)], result | not m];
+                result = get [result, x_sort app first result];
+                break;
+            endif
+        endloop 
+    endloop
+    return result;
+endfunction
+
+
 local function mergeFragments [fragments, merge_list]
     // merge_list element should be sorted.
     // print fragments;
@@ -747,7 +772,9 @@ global function FMOEFragmentationGUI opts
         endif
 
         if trigger === 'add_merge' then
-            state = tagcat [[merge_list: cat [opts.merge_list, [first values.fragment_list]]], state];
+            state = tagcat [[
+                merge_list: appendMergeList [state.merge_list, [first values.fragment_list]
+            ]], state];
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
             *merged_fragments = mergeFragments [*fragments, state.merge_list];
             state = tagcat [[
@@ -772,9 +799,9 @@ global function FMOEFragmentationGUI opts
         endif
         
         if trigger === 'reset_merge' then
-            opts.merge_list = [];
+            state.merge_list = [];
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
-            *merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
             state = tagcat [[
                 detached_bonds: *detached_bonds,
                 fragments: *fragments,
