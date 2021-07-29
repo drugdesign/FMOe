@@ -6,16 +6,14 @@ function InitializeFMOe opts
     local path = fpath (modenv[]).filename;
     load fcat [path, 'TemplateRenderer.svl'];
     load fcat [path, 'utils.svl'];
-    load fcat [path, 'prompts.svl'];
-    load fcat [path, 'formatter.svl'];
     load fcat [path, 'fragmentation_view.svl'];
     load fcat [path, 'autofrag2svl.svl'];
     load fcat [path, 'fragmentation.svl'];
     load fcat [path, 'visualization.svl'];
     ReadMenuFile fcat [path, 'menu-fmoe'];
-    app load flist fcat [path, 'svl', 'model'];
-    app load flist fcat [path, 'svl', 'view'];
-    app load flist fcat [path, 'svl', 'presenter'];
-    ReadMenuFile fcat [path, 'svl', 'menu.svl'];
+    app load flist fcat [path, 'fmoe', 'model'];
+    app load flist fcat [path, 'fmoe', 'view'];
+    app load flist fcat [path, 'fmoe', 'presenter'];
+    ReadMenuFile fcat [path, 'fmoe', 'menu.svl'];
     fmoe_templates = opts.templates;
 endfunction
