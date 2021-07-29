@@ -1,0 +1,61 @@
+#set title 'fmoe:mdb_optimization';
+
+global mdb_key;
+function optH, optLH;
+function PartialCharge;
+
+global function open_mdb_optimization []
+    mdb_key = dbv_DefaultView [];
+endfunction
+
+global function fmoe_db_optH []
+    if isnull mdb_key then
+        return;
+    endif
+    local ent = 0;
+    local data, chain_keys, mol;
+    while ent = db_NextEntry [mdb_key, ent] loop
+        data = db_Read[mdb_key, ent];
+        if isnull data.flag_optH then
+            continue;
+        endif
+        if not data.flag_optH then
+            oDestroy Atoms[];
+            chain_keys = mol_Create data.mol_formed;
+            local q = first PartialCharge [Atoms [] , 'FF'];
+            aSetCharge [Atoms [], q];
+            optH [];
+            mol = mol_Extract Chains [];
+            data.mol_optH = mol;
+            oDestroy chain_keys;
+            data.flag_optH = 1;
+            db_Write [mdb_key, ent, data];
+        endif
+    endloop
+endfunction
+
+global function fmoe_db_optSideLSolv []
+    if isnull mdb_key then
+        return;
+    endif
+    local ent = 0;
+    local data, chain_keys, mol;
+    while ent = db_NextEntry [mdb_key, ent] loop
+        data = db_Read[mdb_key, ent];
+        if isnull data.flag_optL then
+            continue;
+        endif
+        if not data.flag_optL then
+            oDestroy Atoms[];
+            chain_keys = mol_Create data.mol_optH;
+            local q = first PartialCharge [Atoms [] , 'FF'];
+            aSetCharge [Atoms [], q];
+            optLH [1.0];
+            mol = mol_Extract Chains [];
+            data.mol_optL = mol;
+            oDestroy chain_keys;
+            data.flag_optL = 1;
+            db_Write [mdb_key, ent, data];
+        endif
+    endloop
+endfunction

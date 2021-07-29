@@ -1,0 +1,39 @@
+#set title 'fmoe:optimization';
+
+function Initialize_selection, GetH; 
+function update_config_for_optH, update_config_for_optSolv, update_config_for_optLH;
+function ExecMM;
+
+
+global function optH []
+    local aFixed_vector;
+    local weight_vector;
+    update_config_for_optH [];
+    aFixed_vector = aFixed _Atoms['$$all'];
+    weight_vector = 0;
+    ExecMM [aFixed_vector, weight_vector];
+endfunction
+
+global function optSolv [tether_weight]
+    local aFixed_vector;
+    local weight_vector;
+    update_config_for_optSolv [];
+    aFixed_vector = aFixed _Atoms['$$all'];
+    weight_vector = aSelected _Atoms['$$all'] * tether_weight;
+    ExecMM [aFixed_vector, weight_vector];
+endfunction
+
+global function optLH [tether_weight]
+    local aFixed_vector;
+    local weight_vector;
+    update_config_for_optLH [];
+    aFixed_vector = aFixed _Atoms['$$all'];
+    weight_vector = aSelected _Atoms['$$all'] * tether_weight;
+    ExecMM [aFixed_vector, weight_vector];
+endfunction
+
+
+
+
+
+
