@@ -671,7 +671,7 @@ global function FMOEFragmentationGUI opts
         if trigger === 'reset' then
             RemoveAllBonds detached_bonds;
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
-            *merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
             state = tagcat [[
                 detached_bonds: *detached_bonds,
                 fragments: *fragments,
@@ -695,7 +695,7 @@ global function FMOEFragmentationGUI opts
                 apt cat [raw_bonds, 'A', DrawDetachMarker [first cTag state.chains, 0xff8080, raw_bonds]]
             ];
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
-            *merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
             state = tagcat [[
                 detached_bonds: *detached_bonds,
                 fragments: *fragments,
@@ -707,7 +707,7 @@ global function FMOEFragmentationGUI opts
             // naming? Indices? not Pointer or Key?
             RemoveBondsByIndices [detached_bonds, first values.detached_bond_list];
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
-            *merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
             state = tagcat [[
                 detached_bonds: *detached_bonds,
                 fragments: *fragments,
@@ -717,7 +717,7 @@ global function FMOEFragmentationGUI opts
         
         if trigger === 'refresh' then
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
-            *merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
             state = tagcat [[
                 fragments: *fragments,
                 merged_fragments: *merged_fragments
@@ -731,7 +731,7 @@ global function FMOEFragmentationGUI opts
             endif
             dtbAdd [detached_bonds, [[bda, baa]]];
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
-            *merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
             state = tagcat [[
                 detached_bonds: *detached_bonds,
                 fragments: *fragments,
@@ -833,7 +833,7 @@ global function FMOEFragmentationGUI opts
 
         if trigger === 'fmoe_fragmentation' then
             *fragments = PartitionAtoms [state.atoms, *detached_bonds];
-            *merged_fragments = mergeFragments [*fragments, opts.merge_list];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
             // Check the selected template is an ajf file.
             if not (fext values.select_template === 'ajf') then
                 Warning twrite ['unknown template extension: {}', fext values.select_template];
