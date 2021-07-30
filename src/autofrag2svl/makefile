@@ -1,6 +1,6 @@
 SRC = main.go
-DST := ../bin
-NAME = fill_template
+DST := ../../bin
+NAME = autofrag2svl
 
 .DEFAULT_GOAL: all
 

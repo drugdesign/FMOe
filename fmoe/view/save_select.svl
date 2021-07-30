@@ -1,4 +1,4 @@
-#set title 'moe_extensions:view:save_select';
+#set title 'fmoe:view:save_select';
 
 global save_select_data;
 

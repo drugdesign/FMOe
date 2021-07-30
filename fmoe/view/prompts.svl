@@ -1,4 +1,4 @@
-#svl
+#set title 'fmoe:view:prompts'
 
 function AbinitMpFilePrompt opts
     opts = tagcat [opts, [

@@ -1,4 +1,4 @@
-#svl
+#set title 'fmoe::formatter'
 
 function AssignAtomsToFragments;
 function GetNumberOfFunctions;

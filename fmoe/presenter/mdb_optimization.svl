@@ -1,4 +1,8 @@
-#set title 'moe_extensions:mdb_optimization';
+#set title 'fmoe:mdb_optimization';
+/*Optimization with mdb viewer
+
+
+*/
 
 global mdb_key;
 function optH, optLH;

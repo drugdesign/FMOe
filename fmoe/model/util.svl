@@ -1,11 +1,34 @@
-#svl
+#set title 'fmoe:util';
 
 global FMOE_BASISSET_DATA;
 function json_Read;
 
+
+global function mean_tempfactor [atoms]
+    return add aTempFactor atoms / length atoms;
+endfunction
+
+global function max_tempfactor [atoms]
+    return max aTempFactor atoms;
+endfunction
+
+global function min_tempfactor [atoms]
+    return min aTempFactor atoms;
+endfunction
+
+
+global function Initialize_selection []
+    aSetSelected [_Atoms['$$all'], 0];
+    aSetFixed [_Atoms['$$all'], 0];
+endfunction
+
+global function GetH [range]
+    return _Atoms[range] | aElement _Atoms[range] == 'H';
+endfunction
+
 function GetBasedir []
     local env = modenv [];
-    return fpath env.filename;
+    return fcat [fpath env.filename, '..', '..'];
 endfunction
 
 
@@ -70,6 +93,7 @@ endfunction
 function GetTemplates path
     // :path: templates directory path
     // return: List[str]
+    print path;
     local templates = ftail flist path;
     if length templates > 1 then
         return templates | not eqE [templates, 'sample.ajf'];

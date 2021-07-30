@@ -1,6 +1,8 @@
-#set title 'moe_extensions:water_treatment';
+#set title 'fmoe:water_treatment';
 
-function mean_tempfactor, max_tempfactor, min_tempfactor; //scalar
+function mean_tempfactor;
+function max_tempfactor;
+function min_tempfactor; //scalar
 
 global function remove_water_by_tempfactor [func_name, range]
     local level;

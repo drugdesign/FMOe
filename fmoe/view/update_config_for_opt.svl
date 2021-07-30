@@ -1,4 +1,4 @@
-#set title 'moe_extensions:update_config_for_opt';
+#set title 'fmoe:view:update_config_for_opt';
 
 
 function Initialize_selection;

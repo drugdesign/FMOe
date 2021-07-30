@@ -1,4 +1,4 @@
-#set title 'moe_extensions:MM_wrapper';
+#set title 'fmoe:MM_wrapper';
 
 
 global function ExecMM [aFixed_vector, weight_vector]

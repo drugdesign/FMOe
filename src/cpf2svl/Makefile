@@ -1,6 +1,6 @@
-SRC = main.go
-DST := ../bin
-NAME = autofrag2svl
+SRC = main.go write_cpf.go cpf/cpf.go svlwriter/svlwriter.go
+DST := ../../bin
+NAME = cpf2svl
 
 .DEFAULT_GOAL: all
 

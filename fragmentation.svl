@@ -1,5 +1,27 @@
 #set title 'fmoe:fragmentation';
 
+/*FMOe fragmentation Presenter
+MOE module for manual and hybrid fragmentation.
+
+Eamples
+-------
+
+Open fragmentation window with merge
+
+:: 
+
+    FMOEFragmentationGUI [merge: 1]
+
+
+Open framentation window for hybrid fragmentation 
+
+::
+
+    FMOEFragmentationGUI [hybrid: 1]
+
+
+*/
+
 function GetBasedir;
 function RenderTemplate;
 function BatchBinarySearch;
@@ -18,10 +40,19 @@ global fmoe_templates;
 
 
 local function DetachMarker [color, bonds]
-    // detach marker options
-    // :color: coloar
-    // :bonds: List[(atom, atom)]
-    // TODO: move to View
+/*detach marker options
+
+:param color: marker color e.g. 0x999999
+:type color: 
+:parm :
+:type bonds: List[(atom, atom)]
+:return: Detach marker
+:rtye: G_Object
+
+TODO
+---- 
+    - move to View
+*/
     local bda = first tr bonds;
     local baa = second tr bonds;
 
@@ -42,10 +73,17 @@ endfunction
 
 
 local function DrawDetachMarker [title_prefix, color, bonds]
-    // :title_prefix: 
-    // :color:
-    // :bonds: List[(atom, atom)]
-    // TODO: move to view
+/*Instantiate a detach marker in the main window.
+
+:param title_prefix:
+:param color:
+:param bonds:
+:type bonds: [(atom, atom)]
+
+TODO
+----
+    - move to view
+*/
     local keys = app GCreate tok_cat [title_prefix, totok igen length bonds];
     app GVertex apt cat [keys, DetachMarker [color, bonds]];
     return keys;
@@ -53,9 +91,13 @@ endfunction
 
 
 local function FMOFragmentationProtein chains
-    // divides protetins into fragments
-    // :chains:
-    // return: List[(atom, atom)]
+/*devide a protein into fragments.
+
+:param chains: target chains.
+:type chains: [chain]
+:return: fragments
+:rtype: [[atom]]
+*/
     chains = chains | app andE (rType cResidues chains == 'amino');
     local atoms = rAtoms (cat cResidues chains);
     local bda = apt mget [atoms, aName atoms == 'CA'];
@@ -94,7 +136,13 @@ endfunction
 
 
 global function PartitionAtoms [atoms, bonds]
-    // TODO: move another file.
+/*devide atoms by bonds into fragments.
+
+:param atoms: atoms
+:type atoms: [atom]
+:return: fragments
+:rtype: [[atom]]
+*/
     local satoms = sort atoms;
     local nbr = BondGraph satoms;
     local [bda, baa] = tr StripBondExtra bonds;
@@ -184,8 +232,15 @@ endfunction
 
 
 local function mergeFragments [fragments, merge_list]
-    // merge_list element should be sorted.
-    // print fragments;
+/* merge fragments with merge_list.
+
+
+NOTE
+----
+
+merge_list element should be sorted.
+
+*/
     local data = [];
     local i, j;
     local map = igen length fragments;
