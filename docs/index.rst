@@ -13,6 +13,7 @@ Welcome to FMOe's documentation!
    :glob:
 
    installation
+   contribution
 
 .. toctree::
    :caption: Api
@@ -21,9 +22,11 @@ Welcome to FMOe's documentation!
 
    _api/modules
 
-Indices and tables
-==================
+.. toctree::
+   :caption: Tutorials
+   :maxdepth: 1
+   :glob:
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   tutorials/fragmentation
+   tutorials/fragmentation_with_merge
+   tutorials/hydrid_fragmentation
