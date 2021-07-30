@@ -1,20 +1,13 @@
 #set title 'fmoe:util';
 
+/*FMOe Utility functions
+
+General functions.
+
+*/
+
 global FMOE_BASISSET_DATA;
 function json_Read;
-
-
-global function mean_tempfactor [atoms]
-    return add aTempFactor atoms / length atoms;
-endfunction
-
-global function max_tempfactor [atoms]
-    return max aTempFactor atoms;
-endfunction
-
-global function min_tempfactor [atoms]
-    return min aTempFactor atoms;
-endfunction
 
 
 global function Initialize_selection []
@@ -72,12 +65,24 @@ endfunction
 
 
 function GetNumberOfFunctions [basis, atoms]
+/* get number of functions.
+
+    :param basis: basis set name
+    :type basis: token
+    :param atoms: atoms list 
+    :type param: list[atom]
+*/
     // Functionals?
     return app add apt tagget [getBasisSetData basis, aElement atoms];
 endfunction
 
 
 function GetProgramBasisSets ext
+/*TODO: to examin the behaviour.
+
+    :param ext: file?
+    :type ext: token
+*/
     local data = fcat [GetBasedir[], 'basisset', tok_cat [ext ,'.json']];
     if ftype data === 'file' then
         local json = freadb [data, 'line', 1000];
@@ -91,8 +96,13 @@ endfunction
 
 
 function GetTemplates path
-    // :path: templates directory path
-    // return: List[str]
+/*list files in the tenplate folder.
+
+    :param path: templates directory path.
+    :type path: token
+    :return: Templates paths in the given directory.
+    :rtype: list[token]
+*/
     print path;
     local templates = ftail flist path;
     if length templates > 1 then
