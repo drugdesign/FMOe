@@ -1,6 +1,7 @@
 #set title 'fmoe:fragmentation';
 
-/*FMOe fragmentation Presenter
+/*
+FMOe fragmentation Presenter
 MOE module for manual and hybrid fragmentation.
 
 Eamples
