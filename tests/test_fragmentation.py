@@ -11,7 +11,7 @@ class TestFragmentation(TestCase):
     def test_simple1(self):
         """Nomal Fragmentation 
         """
-        svl_command = "run ['../fragmentation.svl',[" \
+        svl_command = "run ['../fmoe/presenter/fragmentation.svl',[" \
                       "test:'fragmentation'," \
                       "moe:'resources/test.moe'," \
                       "renderer:'../bin/fill_template.win64.exe'," \
@@ -27,7 +27,7 @@ class TestFragmentation(TestCase):
     def test_simple2(self):
         """Fragmentation with an additional bond detachment.
         """
-        svl_command = "run ['../fragmentation.svl',[" \
+        svl_command = "run ['../fmoe/presenter/fragmentation.svl',[" \
                       "test:'fragmentation'," \
                       "moe:'resources/test.moe'," \
                       "renderer:'../bin/fill_template.win64.exe'," \

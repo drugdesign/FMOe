@@ -49,7 +49,7 @@ const STANDARD_RESIDUES = [
 
 local function Cpf2SvlExePath []
     local env = modenv [];
-    local exe = fcat [fpath env.filename, 'bin', tok_cat ['cpf2svl.', MOE_ARCH, '.exe']];
+    local exe = fcat [fpath env.filename, '..', '..', 'bin', tok_cat ['cpf2svl.', MOE_ARCH, '.exe']];
     if ftype exe === 'file' then
         return exe;
     endif
