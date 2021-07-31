@@ -12,6 +12,7 @@ Welcome to FMOe's documentation!
    :maxdepth: 4
    :glob:
 
+   about_fmoe
    installation
    contribution
 
