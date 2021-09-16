@@ -14,6 +14,7 @@ endfunction
 
 global function fmoe_db_optH []
     if isnull mdb_key then
+        print "please add flag_optH";
         return;
     endif
     local ent = 0;

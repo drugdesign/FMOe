@@ -66,7 +66,7 @@ MENU APPEND "RightButtonBar"
                 exec "open_mdb_optimization []"
             "OptH via mdb"
                 exec "fmoe_db_optH []"
-            "OptH via mdb"
+            "OptSHL via mdb"
                 exec "fmoe_db_optSideLSolv []"
         ENDMENU
     ENDMENU
