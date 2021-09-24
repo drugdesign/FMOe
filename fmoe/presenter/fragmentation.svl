@@ -643,6 +643,9 @@ global function FMOEFragmentationGUI opts
     WindowShow wkey;
     task_call [#CleanupMain, [quit, wkey, detached_bonds], [master: 'none', creator: 'detach']];
     task_call [#CleanupMain, [quit, wkey, additional_bonds], [master: 'none', creator: 'detach']];
+    if not (opts.merge or opts.hybrid) then
+        task_call [#Sentinel, [wkey, detached_bonds, fragments], [master: 'parent', creator: 'detach']];
+    endif
     if opts.merge then
         task_call [#Sentinel, [wkey, detached_bonds, fragments], [master: 'parent', creator: 'detach']];
     endif
