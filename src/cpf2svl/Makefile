@@ -1,0 +1,21 @@
+SRC = main.go write_cpf.go cpf/cpf.go svlwriter/svlwriter.go
+DST := ../../bin
+NAME = cpf2svl
+
+.DEFAULT_GOAL: all
+
+.PHONY: all
+all: $(DST)/$(NAME).lnx64.exe $(DST)/$(NAME).mac64.exe $(DST)/$(NAME).win64.exe
+
+$(DST)/$(NAME).mac64.exe: $(SRC)
+	GO111MODULE=on GOOS=darwin GOARCH=amd64 go build -o $@
+
+$(DST)/$(NAME).lnx64.exe: $(SRC)
+	GO111MODULE=on GOOS=linux GOARCH=amd64 go build -o $@
+
+$(DST)/$(NAME).win64.exe: $(SRC)
+	GO111MODULE=on GOOS=windows GOARCH=amd64 go build -o $@
+
+.PHONY: clean
+clean:
+	rm -f $(DST)/$(NAME)*

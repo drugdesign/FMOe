@@ -1,0 +1,28 @@
+#svl
+
+function GetBasedir;
+
+local function getRendererPath []
+    // Template renderer binary path.
+    local exe = fcat [GetBasedir[], 'bin', tok_cat ['fill_template.', MOE_ARCH, '.exe']];
+    if ftype exe === 'file' then
+        return exe;
+    endif
+endfunction
+
+
+function RenderTemplate env
+    env = tagcat [env, [
+        renderer: getRendererPath[]
+    ]];
+    local pkey = exe_open_shell [env.renderer, [], env];
+    while exe_status pkey loop
+        sleep 0.01;
+    endloop
+    if exe_exitcode pkey <> 0 then
+        local line;
+        for line in freadb [exe_stderr pkey, 'line', 50] loop
+            fwrite ['*cli*', '{}\n', line];
+        endloop
+    endif
+endfunction

@@ -1,0 +1,39 @@
+&CNTRL
+  Method='MP2'
+  Memory=3000
+  ReadGeom='{{{BASENAME}}}.pdb'
+  WriteGeom='{{{BASENAME}}}.cpf'
+  Charge={{{TOTAL_CHARGE}}}
+  CpfVer=23
+/
+&FMOCNTRL
+  FMO='ON'
+  NBody=2
+  AutoFrag='OFF'
+  NF={{{NUM_FRAGS}}}
+  FragSizeResidue=1
+  FragSizeNucleotide='+base'
+  LigandCharge='{{{LIGAND_CHARGE}}}'
+  HybridFrag='{{{HYBRID_FRAG}}}'
+  HybridNf={{{HYBRID_NF}}}
+  HybridSort='ON'
+  FragSizeAminoacid='+amino'
+  Rsolv='Na=0.0,Br=0.0,Cl=0.0,Mg=0.0'
+  NP=1
+/
+&BASIS
+  BasisSet='{{{BASIS_SET}}}'
+/
+&ANALYSIS
+  PIEDA='YES'
+/
+&POP
+  ESPFIT='ON'
+  ESPTYP='RESP'
+/
+&CCPT
+/
+{{{ABINITMP_FRAGMENT}}}
+&MDCNTRL
+/
+

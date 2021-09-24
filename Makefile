@@ -1,4 +1,4 @@
-PROJECTS = cpf2svl fill_template
+PROJECTS = src/cpf2svl src/fill_template src/autofrag2svl
 CLEAN = $(addsuffix _clean, $(PROJECTS))
 
 .PHONY: all $(PROJECTS)

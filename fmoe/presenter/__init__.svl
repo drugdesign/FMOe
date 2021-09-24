@@ -1,0 +1,12 @@
+/*
+FMOe Presenter
+==============
+
+Collections of controller functions.
+
+These funtions effect on molecules in main or other window 
+or somthimes treats with Tasks (coroutines)
+
+These functions won't return any values. 
+
+*/

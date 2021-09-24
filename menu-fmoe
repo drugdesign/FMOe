@@ -2,6 +2,8 @@ MENU APPEND "RightButtonBar"
     SEPARATOR
     "FMOE" MENU "FMOE"
         "Fragmentation" exec "FMOEFragmentationGUI[]"
+        "Fragmentation/Merge" exec "FMOEFragmentationGUI[merge:1]"
+        # "Fragmentation/Hybrid" exec "FMOEFragmentationGUI[hybrid:1]"
         "Visualization" exec "FMOEVisualizationGUI[]"
     ENDMENU
 ENDMENU
