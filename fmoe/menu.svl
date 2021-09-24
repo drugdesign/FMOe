@@ -60,14 +60,14 @@ MENU APPEND "RightButtonBar"
             "B-Factor Mean"
                 exec "mean_tempfactor [Atoms [] | aSelected Atoms []]"
         ENDMENU
-        "Optimize via mdb"
-        MENU "Optimize via mdb"
-            "Open mdb"
-                exec "open_mdb_optimization []"
-            "OptH via mdb"
-                exec "fmoe_db_optH []"
-            "OptSHL via mdb"
-                exec "fmoe_db_optSideLSolv []"
-        ENDMENU
+        #"Optimize via mdb"
+        #MENU "Optimize via mdb"
+        #    "Open mdb"
+        #        exec "open_mdb_optimization []"
+        #    "OptH via mdb"
+        #        exec "fmoe_db_optH []"
+        #    "OptSHL via mdb"
+        #        exec "fmoe_db_optSideLSolv []"
+        #ENDMENU
     ENDMENU
 ENDMENU
