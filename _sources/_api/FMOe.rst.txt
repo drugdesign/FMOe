@@ -1,0 +1,28 @@
+FMOe package
+============
+
+.. automodule:: FMOe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   FMOe.model
+   FMOe.presenter
+   FMOe.view
+
+Submodules
+----------
+
+FMOe.menu module
+----------------
+
+.. automodule:: FMOe.menu
+   :members:
+   :undoc-members:
+   :show-inheritance:

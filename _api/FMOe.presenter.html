@@ -1,0 +1,765 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>FMOe.presenter package &mdash; fmoe  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="FMOe.view package" href="FMOe.view.html" />
+    <link rel="prev" title="FMOe.model package" href="FMOe.model.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> fmoe
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_fmoe.html">About FMOe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contribution</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Api</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FMOe</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="FMOe.html">FMOe package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="FMOe.html#fmoe">FMOe</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="FMOe.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="FMOe.model.html">FMOe.model package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">FMOe.presenter package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="FMOe.view.html">FMOe.view package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="FMOe.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FMOe.html#module-FMOe.menu">FMOe.menu module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/fragmentation.html">Fragmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/fragmentation_with_merge.html">Fragmentation with merge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/hydrid_fragmentation.html">Hybrid Fragmentation</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">fmoe</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="modules.html">FMOe</a> &raquo;</li>
+        
+          <li><a href="FMOe.html">FMOe package</a> &raquo;</li>
+        
+      <li>FMOe.presenter package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_api/FMOe.presenter.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-FMOe.presenter">
+<span id="fmoe-presenter-package"></span><h1>FMOe.presenter package<a class="headerlink" href="#module-FMOe.presenter" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="fmoe-presenter">
+<h2>FMOe Presenter<a class="headerlink" href="#fmoe-presenter" title="Permalink to this headline">¶</a></h2>
+<p>Collections of controller functions.</p>
+<p>These funtions effect on molecules in main or other window
+or somthimes treats with Tasks (coroutines)</p>
+<p>These functions won’t return any values.</p>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-FMOe.presenter.fragmentation">
+<span id="fmoe-presenter-fragmentation-module"></span><h2>FMOe.presenter.fragmentation module<a class="headerlink" href="#module-FMOe.presenter.fragmentation" title="Permalink to this headline">¶</a></h2>
+<p>FMOe fragmentation Presenter
+MOE module for manual and hybrid fragmentation.</p>
+<div class="section" id="eamples">
+<h3>Eamples<a class="headerlink" href="#eamples" title="Permalink to this headline">¶</a></h3>
+<p>Open fragmentation window with merge</p>
+<p>FMOEFragmentationGUI [merge: 1]</p>
+<p>Open framentation window for hybrid fragmentation</p>
+<p>FMOEFragmentationGUI [hybrid: 1]</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.AlertAtomDialog">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">AlertAtomDialog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.AlertAtomDialog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.AssignAtomsToFragments">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">AssignAtomsToFragments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fragments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.AssignAtomsToFragments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.BondPicker">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">BondPicker</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.BondPicker" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.BondPickerTask">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">BondPickerTask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.BondPickerTask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.CheckAtomNames">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">CheckAtomNames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.CheckAtomNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.CleanupBondPicker">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">CleanupBondPicker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbda</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcands</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.CleanupBondPicker" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.CleanupMain">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">CleanupMain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wkey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detached_bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.CleanupMain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.DetachMarker">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">DetachMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.DetachMarker" title="Permalink to this definition">¶</a></dt>
+<dd><p>detach marker options</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>color</strong> – marker color e.g. 0x999999</p>
+</dd>
+</dl>
+<p>:parm :
+:type bonds: List[(atom, atom)]
+:return: Detach marker
+:rtye: G_Object</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.DrawDetachMarker">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">DrawDetachMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title_prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.DrawDetachMarker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate a detach marker in the main window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>title_prefix</strong> – </p></li>
+<li><p><strong>color</strong> – </p></li>
+<li><p><strong>bonds</strong> (<em>[</em><em>(</em><em>atom</em><em>, </em><em>atom</em><em>)</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.FMOEFragmentationGUI">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">FMOEFragmentationGUI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.FMOEFragmentationGUI" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.FMOFragmentation">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">FMOFragmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chains</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.FMOFragmentation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.FMOFragmentationProtein">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">FMOFragmentationProtein</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chains</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.FMOFragmentationProtein" title="Permalink to this definition">¶</a></dt>
+<dd><p>devide a protein into fragments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>chains</strong> (<em>[</em><em>chain</em><em>]</em>) – target chains.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>fragments</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>[[atom]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.FilterCandidates">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">FilterCandidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bda</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.FilterCandidates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.IsCTerminalFragment">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">IsCTerminalFragment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fragments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.IsCTerminalFragment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.PartitionAtoms">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">PartitionAtoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.PartitionAtoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>devide atoms by bonds into fragments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>atoms</strong> (<em>[</em><em>atom</em><em>]</em>) – atoms</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>fragments</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>[[atom]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.RefreshWindow">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">RefreshWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wkey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.RefreshWindow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.RemoveAllBonds">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">RemoveAllBonds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detached_bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.RemoveAllBonds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.RemoveBondsByIndices">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">RemoveBondsByIndices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detached_bonds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.RemoveBondsByIndices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.Sentinel">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">Sentinel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wkey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detached_bonds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fragments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.Sentinel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.StripBondExtra">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">StripBondExtra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.StripBondExtra" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.appendMergeList">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">appendMergeList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">merge_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.appendMergeList" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.dtbAdd">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">dtbAdd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detached_bonds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_bonds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.dtbAdd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.dtbAutoSplit">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">dtbAutoSplit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detached_bonds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chains</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.dtbAutoSplit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.fmoe_fragmentation">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">fmoe_fragmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.fmoe_fragmentation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.fwrite_AbinitMpPdb">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">fwrite_AbinitMpPdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chains</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.fwrite_AbinitMpPdb" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.fwrite_AbinitMpPdbLine">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">fwrite_AbinitMpPdbLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.fwrite_AbinitMpPdbLine" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.main">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.fragmentation.mergeFragments">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.fragmentation.</span></span><span class="sig-name descname"><span class="pre">mergeFragments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fragments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.fragmentation.mergeFragments" title="Permalink to this definition">¶</a></dt>
+<dd><p>merge fragments with merge_list.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>merge_list element should be sorted.</p>
+</div>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-FMOe.presenter.mdb_optimization">
+<span id="fmoe-presenter-mdb-optimization-module"></span><h2>FMOe.presenter.mdb_optimization module<a class="headerlink" href="#module-FMOe.presenter.mdb_optimization" title="Permalink to this headline">¶</a></h2>
+<p>Optimization with mdb viewer</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.mdb_optimization.fmoe_db_optH">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.mdb_optimization.</span></span><span class="sig-name descname"><span class="pre">fmoe_db_optH</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.mdb_optimization.fmoe_db_optH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.mdb_optimization.fmoe_db_optSideLSolv">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.mdb_optimization.</span></span><span class="sig-name descname"><span class="pre">fmoe_db_optSideLSolv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.mdb_optimization.fmoe_db_optSideLSolv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.mdb_optimization.open_mdb_optimization">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.mdb_optimization.</span></span><span class="sig-name descname"><span class="pre">open_mdb_optimization</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.mdb_optimization.open_mdb_optimization" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.presenter.optimization">
+<span id="fmoe-presenter-optimization-module"></span><h2>FMOe.presenter.optimization module<a class="headerlink" href="#module-FMOe.presenter.optimization" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="optimization-presenter">
+<h3>Optimization presenter<a class="headerlink" href="#optimization-presenter" title="Permalink to this headline">¶</a></h3>
+<p>Optimize atoms with several methods.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.optimization.optH">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.optimization.</span></span><span class="sig-name descname"><span class="pre">optH</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.optimization.optH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimize hydrogens.</p>
+<ul class="simple">
+<li><p>Push FMOE Prep/Opt/OptH</p></li>
+</ul>
+<p>This function is equivalent to</p>
+<ol class="arabic simple">
+<li><p>Select/All</p></li>
+<li><p>Constrain/Free</p></li>
+<li><p>Select/Hydrogens</p></li>
+<li><p>Select/Invert</p></li>
+<li><p>Constrain/Fix</p></li>
+<li><p>Minimize</p></li>
+</ol>
+<p class="rubric">Example</p>
+<p>svl&gt; optH []</p>
+<p>MM [
+pot_finalize   : 0
+,   pot_charge     : 0
+,   keep_chirality : ‘’
+,   sd_maxit       : 100
+,   sd_gtest       : 1000
+,   cg_maxit       : 100
+,   cg_gtest       : 100
+,   optimizeOH     : 1
+,   maxit          : 500
+,   gtest          : 0.1
+,   maxstep        : 1
+,   maxstep_x      : 5
+,   msg_prefix     : ‘’
+,   aRigidBody     : 0
+,   rigidHOH       : 0
+,   rigidOH        : 0
+,   aInert         : 0
+,   aFixed         : 1…
+,   aTether        : []
+,   tetherWeight   : 0
+,   careful        : 1000
+,   private        : 0
+,   verbose        : 1
+];
+MM: started Fri Jul 30 07:46:38 2021
+MM: forcefield: Amber10:EHT (/Applications/ccg/moe_2019.0102/lib/Amber10EHT.ff.g
+z)
+MM: total charge: -6.150083
+MM:[     0]  E: -3.87043e+004  grad: 8.8798e-001  rmsd:   0.000
+..
+MM:[    14]  E: -3.87260e+004  grad: 1.7340e-001  rmsd:   0.002
+MM:[    15]  E: -3.87261e+004  grad: 8.9610e-002  rmsd:   0.002
+MM: energy evaluations : 285</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.optimization.optLH">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.optimization.</span></span><span class="sig-name descname"><span class="pre">optLH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tether_weight</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.optimization.optLH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.optimization.optSolv">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.optimization.</span></span><span class="sig-name descname"><span class="pre">optSolv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tether_weight</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.optimization.optSolv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-FMOe.presenter.save_select">
+<span id="fmoe-presenter-save-select-module"></span><h2>FMOe.presenter.save_select module<a class="headerlink" href="#module-FMOe.presenter.save_select" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.save_select.load_select_ui">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.save_select.</span></span><span class="sig-name descname"><span class="pre">load_select_ui</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.save_select.load_select_ui" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.save_select.save_select_ui">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.save_select.</span></span><span class="sig-name descname"><span class="pre">save_select_ui</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.save_select.save_select_ui" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.presenter.visualization">
+<span id="fmoe-presenter-visualization-module"></span><h2>FMOe.presenter.visualization module<a class="headerlink" href="#module-FMOe.presenter.visualization" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.AbinitMpCheckPointFileToPDBFile">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">AbinitMpCheckPointFileToPDBFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fnum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.AbinitMpCheckPointFileToPDBFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.Common">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">Common</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.Common" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.ConvertCpfToPDB">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">ConvertCpfToPDB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.ConvertCpfToPDB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.Cpf2SvlExePath">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">Cpf2SvlExePath</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.Cpf2SvlExePath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.CreateMoleculeFromCPF">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">CreateMoleculeFromCPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.CreateMoleculeFromCPF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.DimerIndex">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">DimerIndex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.DimerIndex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.DimerLengthToNumFragments">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">DimerLengthToNumFragments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.DimerLengthToNumFragments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.EnergyInspector">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">EnergyInspector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chains</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ifies</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.EnergyInspector" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.FMOEVisualizationGUI">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">FMOEVisualizationGUI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.FMOEVisualizationGUI" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.FormatLigands">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">FormatLigands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.FormatLigands" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.GetFragAtomKeys">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">GetFragAtomKeys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chains</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.GetFragAtomKeys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.GetFragAtomMasks">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">GetFragAtomMasks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.GetFragAtomMasks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.GetFragAtomMasksWithoutCO">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">GetFragAtomMasksWithoutCO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.GetFragAtomMasksWithoutCO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.GetFragNames">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">GetFragNames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.GetFragNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.GetFragResKeys">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">GetFragResKeys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chains</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.GetFragResKeys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.GetNeighborFragmentIndices">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">GetNeighborFragmentIndices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frags</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.GetNeighborFragmentIndices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.GetRange">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">GetRange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ifiesum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.GetRange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.IfieList">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">IfieList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frags</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.IfieList" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.InterpolateRGB">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">InterpolateRGB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rgb0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rgb1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.InterpolateRGB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.IsStandardResidue">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">IsStandardResidue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.IsStandardResidue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.LinearScale">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">LinearScale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.LinearScale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.NumberToRGB">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">NumberToRGB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.NumberToRGB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.OpenCheckPointFile">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">OpenCheckPointFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.OpenCheckPointFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.PickLigandTask">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">PickLigandTask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.PickLigandTask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.RGBColorScale">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">RGBColorScale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rgbmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rgb0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rgbmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.RGBColorScale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.RGBToNumber">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">RGBToNumber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.RGBToNumber" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.SetColorBy">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">SetColorBy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chains</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colorall</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.SetColorBy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.SetRGBByIfie">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">SetRGBByIfie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chains</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ligand_frags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.SetRGBByIfie" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.ShowVisualizationPanel">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">ShowVisualizationPanel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chains</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.ShowVisualizationPanel" title="Permalink to this definition">¶</a></dt>
+<dd><p>local [atom_key, return_code] = task_call [#PickLigandTask, [], [master: ‘parent’]];
+if return_code === ‘’ then
+local picked_fragment = indexof [1, app orE eqE [frag_atoms, atom_key]];
+if trigger === ‘set_ligand’ then
+<a href="#id1"><span class="problematic" id="id2">*</span></a>ligands = picked_fragment;
+else
+<a href="#id3"><span class="problematic" id="id4">*</span></a>ligands = cat [<a href="#id5"><span class="problematic" id="id6">*</span></a>ligands, picked_fragment];
+endif
+<a href="#id7"><span class="problematic" id="id8">*</span></a>ifies = SumIfie [cpf, <a href="#id9"><span class="problematic" id="id10">*</span></a>ligands, [‘ES’, ‘EX’, ‘CT’, ‘DI’]];
+WindowSetAttr [wkey, [ligand_name: [text: FormatLigands [frag_names, <a href="#id11"><span class="problematic" id="id12">*</span></a>ligands]]]];
+update_ifiesum = 1;
+update_colors = 1;
+endif</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.Strip">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">Strip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.Strip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.SumIfie">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">SumIfie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">components</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.SumIfie" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.visualization.WriteTempPDBFile">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.visualization.</span></span><span class="sig-name descname"><span class="pre">WriteTempPDBFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.visualization.WriteTempPDBFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.presenter.water_treatment">
+<span id="fmoe-presenter-water-treatment-module"></span><h2>FMOe.presenter.water_treatment module<a class="headerlink" href="#module-FMOe.presenter.water_treatment" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.presenter.water_treatment.remove_water_by_tempfactor">
+<span class="sig-prename descclassname"><span class="pre">FMOe.presenter.water_treatment.</span></span><span class="sig-name descname"><span class="pre">remove_water_by_tempfactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.presenter.water_treatment.remove_water_by_tempfactor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="FMOe.view.html" class="btn btn-neutral float-right" title="FMOe.view package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="FMOe.model.html" class="btn btn-neutral float-left" title="FMOe.model package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hirotomo Moriwaki, Yusuke Kawashima, Chiduru Watanabe.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+FMOe.model package
+==================
+
+.. automodule:: FMOe.model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+FMOe.model.MM\_wrapper module
+-----------------------------
+
+.. automodule:: FMOe.model.MM_wrapper
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.model.TemplateRenderer module
+----------------------------------
+
+.. automodule:: FMOe.model.TemplateRenderer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.model.autofrag2svl module
+------------------------------
+
+.. automodule:: FMOe.model.autofrag2svl
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.model.b\_factor module
+---------------------------
+
+.. automodule:: FMOe.model.b_factor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.model.formatter module
+---------------------------
+
+.. automodule:: FMOe.model.formatter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.model.util module
+----------------------
+
+.. automodule:: FMOe.model.util
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,58 @@
+FMOe.presenter package
+======================
+
+.. automodule:: FMOe.presenter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+FMOe.presenter.fragmentation module
+-----------------------------------
+
+.. automodule:: FMOe.presenter.fragmentation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.presenter.mdb\_optimization module
+---------------------------------------
+
+.. automodule:: FMOe.presenter.mdb_optimization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.presenter.optimization module
+----------------------------------
+
+.. automodule:: FMOe.presenter.optimization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.presenter.save\_select module
+----------------------------------
+
+.. automodule:: FMOe.presenter.save_select
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.presenter.visualization module
+-----------------------------------
+
+.. automodule:: FMOe.presenter.visualization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.presenter.water\_treatment module
+--------------------------------------
+
+.. automodule:: FMOe.presenter.water_treatment
+   :members:
+   :undoc-members:
+   :show-inheritance:

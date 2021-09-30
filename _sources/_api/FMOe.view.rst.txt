@@ -1,0 +1,42 @@
+FMOe.view package
+=================
+
+.. automodule:: FMOe.view
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+FMOe.view.fragmentation\_view module
+------------------------------------
+
+.. automodule:: FMOe.view.fragmentation_view
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.view.prompts module
+------------------------
+
+.. automodule:: FMOe.view.prompts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.view.save\_select module
+-----------------------------
+
+.. automodule:: FMOe.view.save_select
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+FMOe.view.update\_config\_for\_opt module
+-----------------------------------------
+
+.. automodule:: FMOe.view.update_config_for_opt
+   :members:
+   :undoc-members:
+   :show-inheritance:

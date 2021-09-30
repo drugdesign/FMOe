@@ -1,0 +1,447 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>FMOe.model package &mdash; fmoe  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="FMOe.presenter package" href="FMOe.presenter.html" />
+    <link rel="prev" title="FMOe package" href="FMOe.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> fmoe
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Main</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_fmoe.html">About FMOe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contribution</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Api</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FMOe</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="FMOe.html">FMOe package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="FMOe.html#fmoe">FMOe</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="FMOe.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">FMOe.model package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="FMOe.presenter.html">FMOe.presenter package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="FMOe.view.html">FMOe.view package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="FMOe.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FMOe.html#module-FMOe.menu">FMOe.menu module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/fragmentation.html">Fragmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/fragmentation_with_merge.html">Fragmentation with merge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/hydrid_fragmentation.html">Hybrid Fragmentation</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">fmoe</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="modules.html">FMOe</a> &raquo;</li>
+        
+          <li><a href="FMOe.html">FMOe package</a> &raquo;</li>
+        
+      <li>FMOe.model package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_api/FMOe.model.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-FMOe.model">
+<span id="fmoe-model-package"></span><h1>FMOe.model package<a class="headerlink" href="#module-FMOe.model" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="fmoe-model">
+<h2>FMOe Model<a class="headerlink" href="#fmoe-model" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-FMOe.model.MM_wrapper">
+<span id="fmoe-model-mm-wrapper-module"></span><h2>FMOe.model.MM_wrapper module<a class="headerlink" href="#module-FMOe.model.MM_wrapper" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.MM_wrapper.ExecMM">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.MM_wrapper.</span></span><span class="sig-name descname"><span class="pre">ExecMM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aFixed_vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.MM_wrapper.ExecMM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.model.TemplateRenderer">
+<span id="fmoe-model-templaterenderer-module"></span><h2>FMOe.model.TemplateRenderer module<a class="headerlink" href="#module-FMOe.model.TemplateRenderer" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.TemplateRenderer.RenderTemplate">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.TemplateRenderer.</span></span><span class="sig-name descname"><span class="pre">RenderTemplate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.TemplateRenderer.RenderTemplate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.TemplateRenderer.getRendererPath">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.TemplateRenderer.</span></span><span class="sig-name descname"><span class="pre">getRendererPath</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.TemplateRenderer.getRendererPath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.model.autofrag2svl">
+<span id="fmoe-model-autofrag2svl-module"></span><h2>FMOe.model.autofrag2svl module<a class="headerlink" href="#module-FMOe.model.autofrag2svl" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.autofrag2svl.LoadAutofrag">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.autofrag2svl.</span></span><span class="sig-name descname"><span class="pre">LoadAutofrag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.autofrag2svl.LoadAutofrag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.autofrag2svl.getAutoFrag2SvlPath">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.autofrag2svl.</span></span><span class="sig-name descname"><span class="pre">getAutoFrag2SvlPath</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.autofrag2svl.getAutoFrag2SvlPath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.model.b_factor">
+<span id="fmoe-model-b-factor-module"></span><h2>FMOe.model.b_factor module<a class="headerlink" href="#module-FMOe.model.b_factor" title="Permalink to this headline">¶</a></h2>
+<p>B-factor related functions</p>
+<p>aTempFactor atoms</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.b_factor.max_tempfactor">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.b_factor.</span></span><span class="sig-name descname"><span class="pre">max_tempfactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.b_factor.max_tempfactor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.b_factor.mean_tempfactor">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.b_factor.</span></span><span class="sig-name descname"><span class="pre">mean_tempfactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.b_factor.mean_tempfactor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.b_factor.min_tempfactor">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.b_factor.</span></span><span class="sig-name descname"><span class="pre">min_tempfactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.b_factor.min_tempfactor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.model.formatter">
+<span id="fmoe-model-formatter-module"></span><h2>FMOe.model.formatter module<a class="headerlink" href="#module-FMOe.model.formatter" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.formatter.FormatAbinitMpFragment">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.formatter.</span></span><span class="sig-name descname"><span class="pre">FormatAbinitMpFragment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fragments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detached_bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.formatter.FormatAbinitMpFragment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.formatter.FormatAtomName">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.formatter.</span></span><span class="sig-name descname"><span class="pre">FormatAtomName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atom</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.formatter.FormatAtomName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.formatter.FormatDetachedBonds">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.formatter.</span></span><span class="sig-name descname"><span class="pre">FormatDetachedBonds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bonds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.formatter.FormatDetachedBonds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.formatter.FormatFragments">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.formatter.</span></span><span class="sig-name descname"><span class="pre">FormatFragments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basisset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fragments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detached</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attached</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.formatter.FormatFragments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.formatter.FormatMergeList">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.formatter.</span></span><span class="sig-name descname"><span class="pre">FormatMergeList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">merge_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.formatter.FormatMergeList" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.formatter.getMostFrequent">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.formatter.</span></span><span class="sig-name descname"><span class="pre">getMostFrequent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nested_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.formatter.getMostFrequent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.formatter.wrapForAbinitMp">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.formatter.</span></span><span class="sig-name descname"><span class="pre">wrapForAbinitMp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.formatter.wrapForAbinitMp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-FMOe.model.util">
+<span id="fmoe-model-util-module"></span><h2>FMOe.model.util module<a class="headerlink" href="#module-FMOe.model.util" title="Permalink to this headline">¶</a></h2>
+<p>FMOe Utility functions</p>
+<p>General functions.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.BatchBinarySearch">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">BatchBinarySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.BatchBinarySearch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.GetBasedir">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">GetBasedir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.GetBasedir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.GetH">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">GetH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">range</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.GetH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.GetNumberOfFunctions">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">GetNumberOfFunctions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.GetNumberOfFunctions" title="Permalink to this definition">¶</a></dt>
+<dd><p>get number of functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basis</strong> (<em>token</em>) – basis set name</p></li>
+<li><p><strong>atoms</strong> – atoms list</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.GetProgramBasisSets">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">GetProgramBasisSets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ext</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.GetProgramBasisSets" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: to examin the behaviour.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ext</strong> (<em>token</em>) – file?</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.GetTemplates">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">GetTemplates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.GetTemplates" title="Permalink to this definition">¶</a></dt>
+<dd><p>list files in the tenplate folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>token</em>) – templates directory path.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Templates paths in the given directory.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list[token]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.Initialize_selection">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">Initialize_selection</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.Initialize_selection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.getBasisSetData">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">getBasisSetData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.getBasisSetData" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.getBasisSetNames">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">getBasisSetNames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.getBasisSetNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FMOe.model.util.loadBasisSetData">
+<span class="sig-prename descclassname"><span class="pre">FMOe.model.util.</span></span><span class="sig-name descname"><span class="pre">loadBasisSetData</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#FMOe.model.util.loadBasisSetData" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="FMOe.presenter.html" class="btn btn-neutral float-right" title="FMOe.presenter package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="FMOe.html" class="btn btn-neutral float-left" title="FMOe package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hirotomo Moriwaki, Yusuke Kawashima, Chiduru Watanabe.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
