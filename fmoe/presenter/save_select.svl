@@ -1,0 +1,11 @@
+#set title 'fmoe:presenter:save_select';
+
+function save_select, load_select;
+
+global function save_select_ui []
+    save_select [];
+endfunction
+
+global function load_select_ui []
+    load_select [];
+endfunction

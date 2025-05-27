@@ -1,0 +1,988 @@
+#set title 'fmoe:fragmentation';
+
+/*
+FMOe fragmentation Presenter
+MOE module for manual and hybrid fragmentation.
+
+Eamples
+-------
+
+Open fragmentation window with merge
+
+:: 
+
+    FMOEFragmentationGUI [merge: 1]
+
+
+Open framentation window for hybrid fragmentation 
+
+::
+
+    FMOEFragmentationGUI [hybrid: 1]
+
+
+*/
+
+function GetBasedir;
+function RenderTemplate;
+function BatchBinarySearch;
+function GetProgramBasisSets;
+function GetFragmentationPanel;
+function AbinitMpFilePrompt;
+function GetTemplates;
+function LoadAutofrag;
+function FormatDetachedBonds;
+function FormatAtomName;
+function FormatMergeList;
+function FormatAbinitMpFragment;
+function FormatFragments;
+global FMOE_BASISSET_DATA;
+global fmoe_templates;
+
+
+local function DetachMarker [color, bonds]
+/*detach marker options
+
+:param color: marker color e.g. 0x999999
+:type color: 
+:parm :
+:type bonds: List[(atom, atom)]
+:return: Detach marker
+:rtye: G_Object
+
+TODO
+---- 
+    - move to View
+*/
+    local bda = first tr bonds;
+    local baa = second tr bonds;
+
+    local pos_bda = tr aPos bda;
+    local pos_baa = tr aPos baa;
+    local diff = pos_baa - pos_bda;
+
+    local cap_center = pos_bda + 0.4 * diff;
+    local cap_head = pos_bda + 0.2 * diff;
+    local cap_axis = cap_head - cap_center;
+    local sphere_center = pos_bda + 0.6 * diff;
+
+    return apt G_Cat [
+        apt G_Cap [color, cap_center, cap_axis, 0.8, 2],
+        apt G_Sphere [color, sphere_center, 0.2, 2]
+    ];
+endfunction
+
+
+local function DrawDetachMarker [title_prefix, color, bonds]
+/*Instantiate a detach marker in the main window.
+
+:param title_prefix:
+:param color:
+:param bonds:
+:type bonds: [(atom, atom)]
+
+TODO
+----
+    - move to view
+*/
+    local keys = app GCreate tok_cat [title_prefix, totok igen length bonds];
+    app GVertex apt cat [keys, DetachMarker [color, bonds]];
+    return keys;
+endfunction
+
+
+local function FMOFragmentationProtein chains
+/*devide a protein into fragments.
+
+:param chains: target chains.
+:type chains: [chain]
+:return: fragments
+:rtype: [[atom]]
+*/
+    chains = chains | app andE (rType cResidues chains == 'amino');
+    local atoms = rAtoms (cat cResidues chains);
+    local bda = apt mget [atoms, aName atoms == 'CA'];
+    local baa = apt mget [atoms, aName atoms == 'C'];
+    return tr [bda, baa] | app andE tr [app length bda, app length baa];
+endfunction
+
+
+local function IsCTerminalFragment fragments
+    // :fragments:
+    // return index of fragments
+    local is_amino = app andE eqE [rType aResidue fragments, ['amino']];
+    local coo = andE [
+      eqE [app add eqE [aMMType fragments, 'O2'], 2],
+      eqE [app add eqE [aMMType fragments, 'C'], 1],
+      eqE [app length fragments, 3]
+    ];
+    local cooh = andE [
+      eqE [app add eqE [aMMType fragments, 'O'], 1],
+      eqE [app add eqE [aMMType fragments, 'C'], 1],
+      eqE [app add eqE [aMMType fragments, 'OH'], 1],
+      eqE [app add eqE [aMMType fragments, 'HO'], 1],
+      eqE [app length fragments, 4]
+    ];
+
+    return andE [is_amino, orE[coo, cooh]];
+endfunction
+
+
+function StripBondExtra bonds
+    // ?
+    local bda = app first bonds;
+    local baa = app second bonds;
+    return tr [bda, baa];
+endfunction
+
+
+global function PartitionAtoms [atoms, bonds]
+/*devide atoms by bonds into fragments.
+
+:param atoms: atoms
+:type atoms: [atom]
+:return: fragments
+:rtype: [[atom]]
+*/
+    local satoms = sort atoms;
+    local nbr = BondGraph satoms;
+    local [bda, baa] = tr StripBondExtra bonds;
+    local ibonds = tr [BatchBinarySearch [bda, satoms], BatchBinarySearch [baa, satoms]];
+    ibonds = ibonds | app andE neE [ibonds, 0];
+    nbr = graph_ecutE [nbr, tr ibonds];
+    local unsorted = apt get [[satoms], graph_ccomponent_list nbr];
+    return unsorted[x_sort app min aNumber unsorted];
+endfunction
+
+
+global function FMOFragmentation chains
+    // TODO: rename
+    local bonds = FMOFragmentationProtein chains;
+    local frags = PartitionAtoms [cat cAtoms chains, bonds];
+    local terms = cat (frags | IsCTerminalFragment frags);
+    local mask = not app orE app cat apt eqE [bonds, [[terms]]];
+    return bonds | mask;
+endfunction
+
+
+local function RemoveAllBonds detached_bonds
+    GDestroy (tr *detached_bonds)(4);
+    *detached_bonds = [];
+endfunction
+
+
+local function RemoveBondsByIndices [detached_bonds, indices]
+    local bonds = *detached_bonds;
+    local mask = zero igen length bonds;
+    mask[indices] = 1;
+    GDestroy (tr (bonds | mask))(4);
+    *detached_bonds = bonds | not mask;
+endfunction
+
+
+local function dtbAdd [detached_bonds, raw_bonds, opts]
+    opts = tagcat [opts, [
+        type: 'M',
+        color: 0x00ffff
+    ]];
+    *detached_bonds = cat [
+        *detached_bonds,
+        apt cat [raw_bonds, opts.type, DrawDetachMarker [cTag aChain first tr raw_bonds, opts.color, raw_bonds]]
+    ];
+endfunction
+
+
+local function dtbAutoSplit [detached_bonds, chains]
+    local raw_bonds = FMOFragmentation chains;
+    dtbAdd [detached_bonds, raw_bonds, [type: 'A', color: 0xffffff]];
+endfunction
+
+
+function AssignAtomsToFragments [atoms, fragments]
+    local result, i;
+    for i = 1, length fragments loop
+        result(i) = atoms | app add apt eqE [[fragments(i)], atoms];
+    endloop
+    return result;
+endfunction
+
+
+local function appendMergeList [merge_list, merge_element]
+    // merge_list: [[iFragmA, iFragmB], [iFragmC, iFragmD, ...], [...]]
+    // merge_element: additional fragment list. e.g. [iFragmD, iFragmE]
+    local result = cat [merge_list, merge_element];
+    local elements;
+    local i;
+    local m;
+    loop
+        if not add (m_uniq cat result == 0) then 
+            break; 
+        endif
+        elements = sort uniq cat result;
+        for i = 1, length elements loop
+            m = app orE (result == elements(i));
+            if add m > 1 then
+                result = cat [[sort uniq cat (result | m)], result | not m];
+                result = get [result, x_sort app first result];
+                break;
+            endif
+        endloop 
+    endloop
+    return result;
+endfunction
+
+
+local function mergeFragments [fragments, merge_list]
+/* merge fragments with merge_list.
+
+
+NOTE
+----
+
+merge_list element should be sorted.
+
+*/
+    local data = [];
+    local i, j;
+    local map = igen length fragments;
+
+    for i = 1, length merge_list loop
+        for j = 2, length merge_list(i) loop
+            map[merge_list(i)(j)] = merge_list(i)(1);
+        endloop
+    endloop
+
+    for i = 1, length map loop
+        data = tagpoke [data, totok map(i) , cat [tagpeek [data, totok map(i)], fragments(i)]];
+    endloop
+    return tagvals data;
+endfunction
+
+
+local function RefreshWindow [wkey, state]
+    state = tagcat [state, [
+        merge: 0,
+        merge_list: [],
+        basisset: '',
+        detached_bonds: [],
+        fragments: [],
+        merged_fragments: [],
+        additional_bonds: []
+    ]];
+    local [bda, baa] = tr StripBondExtra state.detached_bonds;
+    local detached_bond_list = FormatDetachedBonds state.detached_bonds;
+    local fragment_list = FormatFragments [state.basisset, state.fragments,
+        AssignAtomsToFragments [bda, state.fragments],
+        AssignAtomsToFragments [baa, state.fragments]];
+    
+    if state.merge then
+        WindowSetAttr [wkey, [
+            detached_bond_list: [text: detached_bond_list],
+            fragment_list: [text: fragment_list],
+            merge_list: [text: FormatMergeList state.merge_list],
+            merged_fragment_list: [text: FormatFragments [state.basisset, state.merged_fragments,
+                AssignAtomsToFragments [bda, state.merged_fragments],
+                AssignAtomsToFragments [baa, state.merged_fragments]]
+            ]
+        ]];
+    elseif state.hybrid then
+        WindowSetAttr [wkey, [
+            detached_bond_list: [text: detached_bond_list],
+            fragment_list: [text: fragment_list],
+            additional_bond_list: [text: FormatDetachedBonds state.additional_bonds],
+            hybrid_fragment_list:  [text: FormatFragments [state.basisset, state.hybrid_fragments,
+                AssignAtomsToFragments [bda, state.hybrid_fragments],
+                AssignAtomsToFragments [baa, state.hybrid_fragments]]
+            ]
+        ]];
+
+
+    else
+        WindowSetAttr [wkey, [
+            detached_bond_list: [text: detached_bond_list],
+            fragment_list: [text: fragment_list]
+        ]];
+    endif
+endfunction
+
+
+const BOND_PICKER_PANEL = [
+    name: 'atom',
+    mode: 'pickAtom',
+    title: 'pick BDA...',
+    location: 'MOE'
+];
+
+
+local function CleanupBondPicker [quit, dbda, dcands]
+    dvar_lock app dvar_open [quit, dbda, dcands];
+    local bda = *dbda;
+    if not (bda === []) then
+        local [atom, colorby, color] = bda;
+        aSetColorBy [atom, colorby];
+        aSetRGB [atom, color];
+    endif
+    local cands = *dcands;
+    if not (cands === []) then
+        local [nbr, look] = cands;
+        apt aSetNucleusLook [nbr, look];
+    endif
+endfunction
+
+
+local function FilterCandidates [bda, nbr]
+    if aGeometry bda === 'sp3' then
+        return nbr | aElement nbr <> 'H';
+    else
+        return nbr | andE [aGeometry nbr == 'sp3', aElement nbr == 'C'];
+    endif
+endfunction
+
+
+local function BondPickerTask []
+    local quit = dvar_open [];
+    dvar_lock quit;
+    local dbda = dvar_open [];
+    local dcands = dvar_open [];
+
+    task_call [#CleanupBondPicker, [quit, dbda, dcands], [master: 'none', creator: 'detach']];
+
+    local wkey = WindowCreate BOND_PICKER_PANEL;
+    local bda = (first WindowWait wkey).atom;
+    *dbda = [bda, aColorBy bda, aRGB bda];
+    aSetColorBy [bda, 'rgb'];
+    aSetRGB [bda, 0x999900];
+
+    local nbr = cat aBonds bda;
+    local candidates = FilterCandidates [bda, nbr];
+    *dcands = [candidates, aNucleusLook candidates];
+    aSetNucleusLook [candidates, 'small-sphere'];
+
+    WindowSetAttr [wkey, [atom: [title: 'pick BAA...']]];
+
+    local baa;
+    loop
+        baa = (first WindowWait wkey).atom;
+        if orE eqE [baa, candidates] then
+            break;
+        elseif orE eqE [baa, nbr] then
+            if YesNo 'Selected atom is not SP3 carbon.\ncontinue?' then
+                break;
+            endif
+        endif
+    endloop
+
+    WindowDestroy wkey;
+    dvar_unlock quit;
+    return [bda, baa];
+endfunction
+
+
+local function BondPicker []
+    local [result, status] = task_call [#BondPickerTask, [], [master: 'parent', creator: 'blockEOK']];
+    if status === '' then
+        return result;
+    endif
+endfunction
+
+
+local function CleanupMain [quit, wkey, detached_bonds]
+    dvar_lock app dvar_open [quit, detached_bonds];
+    GDestroy (tr *detached_bonds)(4);
+    WindowDestroy wkey;
+endfunction
+
+
+local function Sentinel [wkey, detached_bonds, fragments]
+    local old_selected = [];
+    local i = 0;
+    local [bda, baa, _, gobj] = tr * detached_bonds;
+    while andE [andE oValid bda, andE oValid baa, andE GKey gobj] loop
+        local rbda = andE [rRibbonMode aResidue bda <> 'none', rRibbonEnable aResidue bda];
+        local rbaa = andE [rRibbonMode aResidue baa <> 'none', rRibbonEnable aResidue baa];
+        GSetVisible [gobj, apt orE [rbda, not aHidden bda, rbaa, not aHidden baa]];
+
+        local selected = SelectedAtoms [];
+        if not (old_selected === selected) then
+            old_selected = selected;
+
+            WindowSetData [wkey, [
+                fragment_list: (igen length *fragments) | app length AssignAtomsToFragments [selected, *fragments]
+            ]];
+        endif
+
+        sleep 0.2;
+        [bda, baa, _, gobj] = tr *detached_bonds;
+    endloop
+    task_kill (task_info task_key -1).parent;
+endfunction
+
+
+local function CheckAtomNames atoms
+    // TODO: make test
+    atoms = atoms | rType aResidue atoms == 'none';
+
+    local alert = [];
+    local atom;
+    for atom in atoms loop
+        local element = aElement atom;
+        local name = tolower string aName atom;
+        if length name < 2 then
+            continue;
+        endif
+        if andE [element === 'H', orE (name(2) == "eofgs")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'B', orE (name(2) == "eraikh")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'C', orE (name(2) == "laroudsemfn")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'N', orE (name(2) == "eaibdpoh")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'O', orE (name(2) == "sg")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'F', orE (name(2) == "erml")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'P', orE (name(2) == "drmtboau")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'S', orE (name(2) == "icernbmg")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'K', orE (name(2) == "r")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'Y', orE (name(2) == "b")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'I', orE (name(2) == "nr")] then
+            alert = append [alert, atom];
+        endif
+        if andE [element === 'U', orE (name(2) == "u")] then
+            alert = append [alert, atom];
+        endif
+    endloop
+    return alert;
+endfunction
+
+
+const ALERT_ATOM_PANEL = [
+    name: 'atom_alert',
+    title: 'Atom name alert',
+    windowName: 'atom_alert',
+    text: ['Auto', 'Continue', 'Cancel'],
+    Label: [text: 'these atoms may misrecognition by ABINIT-MP.\nIt is recommended to rename atom name(s).'],
+    Hbox: [
+        Listbox: [name: 'atoms', onTrigger: 'return', type: 'int'],
+        Button: [text: 'refresh', name: 'refresh']
+    ]
+];
+
+
+local function AlertAtomDialog atoms
+    local wkey = WindowCreate ALERT_ATOM_PANEL;
+    WindowShow wkey;
+
+    local alerts = CheckAtomNames atoms;
+    if alerts === [] then
+        return [1, []];
+    endif
+
+    WindowSetAttr [wkey, [atoms: [text: aName alerts]]];
+
+    loop
+        local [values, trigger] = WindowWait wkey;
+        if trigger === 'atoms' then
+            if values.atoms(2) == 1 then
+                aSetSelected [Atoms [], 0];
+                aSetSelected [alerts(values.atoms(1)), 1];
+            else
+                View alerts(values.atoms(1));
+            endif
+
+        elseif trigger === 'refresh' then
+            alerts = CheckAtomNames atoms;
+            if alerts === [] then
+                return [1, []];
+            endif
+            WindowSetAttr [wkey, [atoms: [text: aName alerts]]];
+
+        elseif trigger === 'atom_alert' then
+            if values.atom_alert === 'Auto' then
+                alerts = CheckAtomNames atoms;
+                aSetName [alerts, app token apt poke [app string aName alerts, 2, "X"]];
+                return [1, []];
+            elseif values.atom_alert === 'Continue' then
+                return [1, alerts];
+            elseif values.atom_alert === 'Cancel' then
+                return [0, alerts];
+            endif
+
+        endif
+    endloop
+
+    WindowDestroy wkey;
+endfunction
+
+
+global function fwrite_AbinitMpPdbLine [f, i, atom]
+    local header = 'ATOM  ';
+    if app orE apt eqE [rType aResidue atom, [['heme', 'none']]] then
+        header = 'HETATM';
+    endif
+    local residue = aResidue atom;
+    local [x, y, z] = aPos atom;
+
+	// '{t:-6}{n:5} {t:-4}{c:1}{t:3} {c:1}{n:4}{c:1}   ',
+	// '{n:8.3f}{n:8.3f}{n:8.3f}', occupancy_fmt, tfactor_fmt,
+	// '          {t:2}{t:2}\n'
+    fwrite [f, '{t:-6}{n:5} {t:-4} {t:3} {c:1}{n:4}{c:1}   {n:8.3f}{n:8.3f}{n:8.3f}{n:6.2f}{n:6.2f}\n', header,
+        i,
+        FormatAtomName atom,
+        rName residue,
+        cLetter aChain atom,
+        rUID residue,
+        rINS residue,
+        x, y, z,
+        aOccupancy atom,
+        aTempFactor atom
+    ];
+endfunction
+
+
+global function fwrite_AbinitMpPdb [f, chains]
+    local chain, atom;
+    local i = 0;
+    local c = 0;
+    local indices = [];
+    for chain in chains loop
+        c = c + 1;
+        for atom in cat cAtoms chain loop
+            i = i + 1;
+            indices(i) = atom;
+
+            fwrite_AbinitMpPdbLine [f, i, atom];
+        endloop
+        if c == length chains then
+            fwrite [f, 'END\n'];
+        else
+            fwrite [f, 'TER\n'];
+        endif
+    endloop
+    return indices;
+endfunction
+
+
+function fmoe_fragmentation opts
+    opts = tagcat [opts, [
+        template: 'templates\\sample.ajf',
+        renderer: 'bin\\fill_template.win64.exe',
+        moe: 'tests\\test.moe',
+        fbase: 'test',
+        pdb: 'tests\\temp\\test.pdb',
+        ajf: 'tests\\temp\\test.ajf',
+        basis_set: '6-31g*',
+        bda_id: 0,
+        baa_id: 0
+    ]];
+    print opts;
+    Open opts.moe;
+    local detached_bonds = dvar_open [];
+    local fragments = dvar_open [];
+    local chains = Chains [];
+    dtbAutoSplit [detached_bonds, chains];
+    *fragments = PartitionAtoms [cat cAtoms chains, *detached_bonds];
+    local pdb_path = fopenw opts.pdb;
+    local w_atoms = fwrite_AbinitMpPdb [pdb_path, chains];
+    fclose pdb_path;
+    // For manual fragmentation test.
+    // pretend to cut by BondPicker [].
+    if (opts.bda_id and opts.baa_id) then 
+        local bda = Atoms [] | aNumber Atoms [] == opts.bda_id;
+        local baa = Atoms [] | aNumber Atoms [] == opts.baa_id;
+        dtbAdd [detached_bonds, [[bda, baa]]];
+        *fragments = PartitionAtoms [cat cAtoms chains, *detached_bonds];
+    endif
+    RenderTemplate [
+        BASENAME: opts.fbase,
+        TOTAL_CHARGE: totok add cat aFCharge cAtoms chains,
+        NUM_FRAGS: totok length *fragments,
+        BASIS_SET: opts.basis_set,
+        ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds],
+        renderer: opts.renderer,
+        TEMPLATE_PATH: ffullname opts.template,
+        OUTPUT_PATH: ffullname opts.ajf
+    ];
+endfunction
+
+
+global function FMOEFragmentationGUI opts
+    opts = tagcat [opts, [
+        test: '', 
+        merge: 0,
+        merge_list: [],
+        autofrag: '',
+        autofrag_svlb: '',
+        target_fragment_id: [],
+        hybrid: 0
+    ]];
+
+    local quit = dvar_open [];
+    local wkey = WindowCreate GetFragmentationPanel opts;
+    local detached_bonds = dvar_open [];
+    local additional_bonds = dvar_open [];
+    local fragments = dvar_open [];
+    local merged_fragments = dvar_open [];
+    local hybrid_fragments = dvar_open [];
+    dvar_lock quit;
+    WindowShow wkey;
+    task_call [#CleanupMain, [quit, wkey, detached_bonds], [master: 'none', creator: 'detach']];
+    task_call [#CleanupMain, [quit, wkey, additional_bonds], [master: 'none', creator: 'detach']];
+    if not (opts.merge or opts.hybrid) then
+        task_call [#Sentinel, [wkey, detached_bonds, fragments], [master: 'parent', creator: 'detach']];
+    endif
+    if opts.merge then
+        task_call [#Sentinel, [wkey, detached_bonds, fragments], [master: 'parent', creator: 'detach']];
+    endif
+    if opts.hybrid then
+        task_call [#Sentinel, [wkey, additional_bonds, hybrid_fragments], [master: 'parent', creator: 'detach']];
+    endif
+    // fmoe_templates is a global variable.
+    if fmoe_templates == '' then
+        fmoe_templates = fcat [GetBasedir[], 'templates'];
+    endif
+    local templates = GetTemplates fmoe_templates;
+
+    local state = [
+        merge: opts.merge,
+        hybrid: opts.hybrid,
+        chains: [],
+        atoms: [],
+        merged_fragments: [],
+        target_fragment_id: opts.target_fragment_id,
+        basisset: '6-31g*', 
+        detached_bonds: [], 
+        fragments: [],
+        merge_list: opts.merge_list,
+        autofrag_file: ''
+    ];
+    state = tagcat [[
+        chains: Chains [],
+        atoms: cat cAtoms Chains []
+        ], state];
+
+    if not state.hybrid then 
+        dtbAutoSplit [detached_bonds, state.chains];  // slow
+    endif
+
+    if opts.test <> '' and opts.autofrag <> '' then
+        opts.AUTOFRAG_PATH = opts.autofrag;
+        local [bda_autofrag, baa_autofrag] = LoadAutofrag opts;
+        local raw_bonds = tr [
+            apt mget [[state.atoms], eqE [bda_autofrag, [aNumber state.atoms]]],
+            apt mget [[state.atoms], eqE [baa_autofrag, [aNumber state.atoms]]]
+        ];
+        if opts.hybrid then
+            dtbAdd [detached_bonds, raw_bonds, [type:'A', color: 0xffffff]];
+        else
+            dtbAdd [detached_bonds, raw_bonds, [type:'A']];
+        endif
+    endif 
+
+    *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+    state = tagcat [[detached_bonds: *detached_bonds, fragments: *fragments], state];
+
+    if state.merge then
+        *merged_fragments = mergeFragments [*fragments, state.merge_list]; 
+        state = tagcat [[merged_fragments: *merged_fragments], state];
+    endif
+
+    // TODO: rename select_template more acculately.
+    WindowSetAttr [wkey, [select_template: [text: templates]]];
+    local [default_basisset, aliases] = GetProgramBasisSets fext (WindowGetData [wkey, ['select_template']]).select_template;
+    WindowSetAttr [wkey, [select_basisset: [text: first untag aliases]]];
+
+    if not (default_basisset === []) then
+        WindowSetData [wkey, [select_basisset: default_basisset]];
+    endif
+
+    loop
+        RefreshWindow [wkey, state];
+        local [values, trigger] = WindowWait wkey;
+
+        if trigger === 'auto' then
+            RemoveAllBonds detached_bonds;
+            dtbAutoSplit [detached_bonds, state.chains];
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+
+        if trigger === 'reset' then
+            RemoveAllBonds detached_bonds;
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+
+        if trigger === 'load_autofrag' then
+            RemoveAllBonds detached_bonds;
+            state.AUTOFRAG_PATH = FilePrompt [title: 'open autofrag log', mode: 'open'];
+            if state.AUTOFRAG_PATH === [] then
+                continue;
+            endif
+            [bda_autofrag, baa_autofrag] = LoadAutofrag state;
+            raw_bonds = tr [
+                apt mget [[state.atoms], eqE [bda_autofrag, [aNumber state.atoms]]],
+                apt mget [[state.atoms], eqE [baa_autofrag, [aNumber state.atoms]]]
+            ];
+            *detached_bonds = cat [
+                *detached_bonds,
+                apt cat [raw_bonds, 'A', DrawDetachMarker [first cTag state.chains, 0xff8080, raw_bonds]]
+            ];
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+        
+        if trigger === 'remove_bond' then
+            // naming? Indices? not Pointer or Key?
+            RemoveBondsByIndices [detached_bonds, first values.detached_bond_list];
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+        
+        if trigger === 'refresh' then
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+        
+        if trigger === 'add_bond' then
+            local [bda, baa] = BondPicker [];
+            if not (bda and baa) then
+                continue;
+            endif
+            dtbAdd [detached_bonds, [[bda, baa]]];
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+        
+        if trigger === 'select_basisset' then
+            state = tagcat[[select_basisset: tagget [aliases, values.select_basisset]], state];
+        endif
+        
+        if trigger === 'detached_bond_list' then
+            aSetSelected [Atoms [], 0];
+            local selected_detached_atoms = cat StripBondExtra (*detached_bonds)[first values.detached_bond_list];
+            aSetSelected [selected_detached_atoms, 1];
+            WindowSetData [wkey, [
+                fragment_list: (igen length *fragments) | app length AssignAtomsToFragments [selected_detached_atoms, *fragments]
+            ]];
+        endif
+        
+        if trigger === 'fragment_list' then
+            aSetSelected [Atoms[], 0];
+            local selected_fragmennt_atoms = cat (*fragments)[first values.fragment_list];
+            aSetSelected [selected_fragmennt_atoms, 1];
+            WindowSetData [wkey, [
+                detached_bond_list: (igen length *detached_bonds) | app orE app orE apt eqE [[[selected_fragmennt_atoms]], StripBondExtra *detached_bonds]
+            ]];
+        endif
+
+        if trigger === 'merge_list' then
+            aSetSelected [Atoms[], 0];
+            aSetSelected [cat (*fragments)[third tr values.merge_list], 1];
+        endif
+
+        if trigger === 'merged_fragment_list' then
+            aSetSelected [Atoms[], 0];
+            aSetSelected [cat *merged_fragments[first values.merged_fragment_list], 1];
+        endif
+
+        if trigger === 'add_merge' then
+            state = tagcat [[
+                merge_list: appendMergeList [state.merge_list, [first values.fragment_list]
+            ]], state];
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+
+        if trigger === 'remove_merge' then
+            local index = second values.merge_list;
+            local mask = one igen length state.merge_list;
+            mask(index) = 0;
+            state.merge_list = state.merge_list | mask;
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+        
+        if trigger === 'reset_merge' then
+            state.merge_list = [];
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+
+        if trigger === 'add_additional_bond' then
+            // TODO: refactor
+            [bda, baa] = BondPicker [];
+            if not (bda and baa) then
+                continue;
+            endif
+            dtbAdd [additional_bonds, [[bda, baa]]];
+            state.additional_bonds = *additional_bonds;
+            bda = first tr *additional_bonds;
+            baa = second tr *additional_bonds;
+            local additional_atoms = uniq cat [bda, baa];
+            local target_mask = app length AssignAtomsToFragments [additional_atoms, *fragments];
+            state.target_fragment_id = igen length *fragments | target_mask;
+            state.target_atoms = cat (*fragments | target_mask);
+            *hybrid_fragments = PartitionAtoms [state.target_atoms, *additional_bonds];
+            state = tagcat [[
+                detached_bonds: *detached_bonds,
+                fragments: *fragments,
+                merged_fragments: *merged_fragments
+            ], state];
+        endif
+
+        if trigger === 'fmoe_fragmentation' then
+            *fragments = PartitionAtoms [state.atoms, *detached_bonds];
+            *merged_fragments = mergeFragments [*fragments, state.merge_list];
+            // Check the selected template is an ajf file.
+            if not (fext values.select_template === 'ajf') then
+                Warning twrite ['unknown template extension: {}', fext values.select_template];
+                continue;
+            endif
+
+            // Check Atom type for abinitmp execution.
+            local [[ok, _], task_state] = task_call [#AlertAtomDialog, state.atoms, [master: 'parent']];
+            if not (task_state === '' and ok) then
+                continue;
+            endif 
+
+            // Set output basename.
+            local path_prefix = AbinitMpFilePrompt [];
+            if path_prefix === [] then
+                continue;
+            endif
+
+            // Write PDB file.
+            local pdb_file = fopenw tok_cat [path_prefix, '.pdb'];
+            local w_atoms = fwrite_AbinitMpPdb [pdb_file, state.chains];
+            fclose pdb_file;
+            
+            if values.ligand_charge == '' then
+                values.ligand_charge = 'None';
+            endif
+
+            local envTemplate = [
+                BASENAME: ftail path_prefix,
+                TOTAL_CHARGE: totok add cat aFCharge cAtoms state.chains,
+                BASIS_SET: values.select_basisset,
+                LIGAND_CHARGE: values.ligand_charge
+            ];
+            
+            if state.merge then
+                envTemplate = tagcat [envTemplate, [
+                    NUM_FRAGS: totok length *merged_fragments,
+                    ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *merged_fragments, *detached_bonds]
+                ]];
+            elseif state.hybrid then
+                envTemplate = tagcat [envTemplate, [
+                    NUM_FRAGS: totok length *hybrid_fragments,
+                    ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *hybrid_fragments, *additional_bonds],
+                    HYBRID_FRAG: twrite ['{|,}', state.target_fragment_id],
+                    HYBRID_NF: totok length *hybrid_fragments
+                ]];
+            else
+                envTemplate = tagcat [envTemplate, [
+                    NUM_FRAGS: totok length *fragments,
+                    ABINITMP_FRAGMENT: FormatAbinitMpFragment [w_atoms, *fragments, *detached_bonds]
+                ]];
+            endif
+            print envTemplate;
+            // Render ajf file.
+            RenderTemplate tagcat [envTemplate, [
+                TEMPLATE_PATH: ffullname fcat [fmoe_templates, values.select_template],
+                OUTPUT_PATH: ffullname tok_cat [path_prefix, '.ajf']]
+            ];
+
+            // Render sh file.
+            if not ((WindowGetData [wkey, ['gen_job']]).gen_job) then
+                continue;
+            endif
+            RenderTemplate tagcat [envTemplate, [
+                TEMPLATE_PATH: ffullname fcat [fmoe_templates, tok_cat [fbase values.select_template, '.sh']],
+                OUTPUT_PATH: ffullname tok_cat [path_prefix, '.sh']]
+            ];
+        endif
+    endloop
+    WindowDestroy wkey;
+endfunction
+
+
+local function main opts
+    if opts.test == 'fragmentation' then
+        fmoe_fragmentation opts; 
+    endif
+    if opts.test == 'fragmentation_gui' then
+        Open opts.moe;
+        FMOEFragmentationGUI opts;
+    endif
+    if opts.test == 'merge' then
+        print FormatMergeList opts.merge_list;
+    endif
+    if opts.test == 'merge_fragments' then
+        local merge_list = [[1,2,3], [4,5,6]];
+        print FormatMergeList opts.merge_list;
+    endif
+    if opts.test == 'hybrid' then
+        Open opts.moe;
+        FMOEFragmentationGUI opts;
+    endif
+endfunction

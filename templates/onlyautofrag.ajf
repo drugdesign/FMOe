@@ -1,0 +1,77 @@
+&CNTRL
+  ReadGeom='{{{BASENAME}}}.pdb'
+  Nprint=0
+/
+&FMOCNTRL
+  AutoFrag='ON'
+  FragSizeAminoacid='+amino'
+  FragSizeNucleotide='+base'
+  Rsolv='Na=0.0,Br=0.0,Cl=0.0,Mg=0.0'
+  LigandCharge='{{{LIGAND_CHARGE}}}'
+/
+&SCF
+/
+&BASIS
+/
+&OPTCNTRL
+/
+&MFMO
+/
+&SCZV
+/
+&XUFF
+/
+&MP2
+/
+&MP2DNS
+/
+&MP2GRD
+/
+&MP3
+/
+&LMP2
+/
+&LRD
+/
+&DFT
+/
+&ANALYSIS
+/
+&BSSE
+/
+&FRAGPAIR
+/
+&SOLVATION
+/
+&PBEQ
+/
+&POP
+/
+&GRIDCNTRL
+/
+&MCP
+/
+&CIS
+/
+&CISGRD
+/
+&CAFI
+/
+&POL
+/
+&GF2
+/
+&CCPT
+/
+&XYZ
+/
+&FRAGMENT
+/
+&MDCNTRL
+/
+&VEL
+/
+&NHC
+/
+&TYPFRAG
+/

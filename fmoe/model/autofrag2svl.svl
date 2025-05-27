@@ -1,0 +1,36 @@
+#svl
+
+function GetBasedir;
+
+local function getAutoFrag2SvlPath []
+    // Template renderer binary path.
+    local exe = fcat [GetBasedir[], 'bin', tok_cat ['autofrag2svl.', MOE_ARCH, '.exe']];
+    if ftype exe === 'file' then
+        return exe;
+    endif
+endfunction
+
+
+
+function LoadAutofrag env
+    env = tagcat [env, [
+        autofrag2svl: getAutoFrag2SvlPath[],
+        AUTOFRAG_PATH: '',
+        SVLBIN_PATH: fnametemp '$TMP/fmoe_parsed_autofrag*.bin'
+    ]];
+    local msg = Message [0, twrite ['Parsing the autofrag file {}...', env.AUTOFRAG_PATH]];
+
+    local pkey = exe_open_shell [env.autofrag2svl, [], [AUTOFRAG_PATH: env.AUTOFRAG_PATH, SVLBIN_PATH: env.SVLBIN_PATH]];
+    while exe_status pkey loop
+        sleep 0.01;
+    endloop
+    if not exe_exitcode pkey then
+        Message [msg, []];
+        return freadb [env.SVLBIN_PATH, 'SVL', 50];
+    else
+        local line;
+        for line in freadb [exe_stderr pkey, 'line', 50] loop
+            fwrite ['*cli*', '{}\n', line];
+        endloop
+    endif
+endfunction
