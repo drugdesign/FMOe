@@ -1,0 +1,75 @@
+&CNTRL
+  Method='MP2'
+  Memory=8000
+  ReadGeom='{{{BASENAME}}}.pdb'
+  WriteGeom='{{{BASENAME}}}.cpf'
+  Charge={{{TOTAL_CHARGE}}}
+/
+&FMOCNTRL
+  AutoFrag='OFF'
+  NF={{{NUM_FRAGS}}}
+/
+&SCF
+/
+&BASIS
+  BasisSet='{{{BASIS_SET}}}'
+/
+&OPTCNTRL
+/
+&MLFMO
+/
+&MFMO
+/
+&XUFF
+/
+&SCZV
+/
+&MP2
+/
+&MP2DNS
+/
+&MP2GRD
+/
+&MP3
+/
+&LMP2
+/
+&DFT
+/
+&PIEDA
+/
+&BSSE
+/
+&FRAGPAIR
+/
+&SOLVATION
+/
+&PBEQ
+/
+&POP
+/
+&GRIDCNTRL
+/
+&MCP
+/
+&CIS
+/
+&CISGRD
+/
+&CAFI
+/
+&POL
+/
+&GF2
+/
+&CCPT
+/
+{{{ABINITMP_FRAGMENT}}}
+&MDCNTRL
+/
+&VEL
+/
+&NHC
+/
+&TYPFRAG
+/
