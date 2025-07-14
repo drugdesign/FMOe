@@ -128,6 +128,55 @@ local function IsCTerminalFragment fragments
 endfunction
 
 
+function  FMOFragmentationNucleicAcid chains
+/*devide nucleic acids into fragments.
+
+:param chains: target chains.
+:type chains: [chain]
+:return: fragments
+:rtype: [[atom]]
+*/
+    local i,j;
+    local bda_nucleic_acid_backbone = [];
+    local baa_nucleic_acid_backbone = [];
+    local bda_nucleic_acid_base = [];
+    local baa_nucleic_acid_base = [];
+
+    local residues_wo_amino = cResidues chains | m_diff[ rType cResidues chains, 'amino'];
+    local residues_wo_amino_wo_water = cat residues_wo_amino | m_diff[ rName cat residues_wo_amino, ['HOH','DOD']];
+    local atoms_wo_amino_wo_water = cat rAtoms residues_wo_amino_wo_water;
+    local num_mols = uniq aMoleculeNumber atoms_wo_amino_wo_water;
+
+    for i = 1, length num_mols loop
+        local mol_atoms = atoms_wo_amino_wo_water | m_findmatch [totok i,  totok aMoleculeNumber atoms_wo_amino_wo_water];
+        local atoms_dna = mol_atoms | m_findmatch [['dna','rna'], cat rType aResidue mol_atoms];
+        local atoms_nucleic_acid_backbone = apt mget [atoms_dna, rNumber aResidue atoms_dna <> 1]; // To remove fragment segmentation at the end of the 5' end.
+        bda_nucleic_acid_backbone = cat append [bda_nucleic_acid_backbone, cat apt mget [atoms_nucleic_acid_backbone, aName atoms_nucleic_acid_backbone == 'C5\'']];
+        baa_nucleic_acid_backbone = cat append [baa_nucleic_acid_backbone, cat apt mget [atoms_nucleic_acid_backbone, aName atoms_nucleic_acid_backbone == 'C4\'']];
+
+        local bda_nucleic_acid_base_each_chain =[];
+        bda_nucleic_acid_base_each_chain = cat append [bda_nucleic_acid_base_each_chain, cat apt mget [atoms_dna, aName atoms_dna == 'C1\'']];
+        
+        local baa_nucleic_acid_base_each_chain =[];
+        for j = 1, length bda_nucleic_acid_base_each_chain loop
+            local baa_nucleic_acid_base_atom = second BondList bda_nucleic_acid_base_each_chain[j] | m_diff [ aName second BondList bda_nucleic_acid_base_each_chain[j], ['N1','N9']] == 0;
+            baa_nucleic_acid_base_each_chain = cat append [baa_nucleic_acid_base_each_chain, baa_nucleic_acid_base_atom]; 
+        endloop
+
+        bda_nucleic_acid_base = cat append [bda_nucleic_acid_base, bda_nucleic_acid_base_each_chain];
+        baa_nucleic_acid_base = cat append [baa_nucleic_acid_base, baa_nucleic_acid_base_each_chain];
+
+    endloop
+
+// Marge BDA and BAA data
+    local bda = cat [bda_nucleic_acid_backbone, bda_nucleic_acid_base];
+    local baa = cat [baa_nucleic_acid_backbone, baa_nucleic_acid_base];
+
+    return tr [bda, baa] | app andE tr [app length bda, app length baa];
+
+endfunction
+
+
 function StripBondExtra bonds
     // ?
     local bda = app first bonds;
@@ -157,7 +206,9 @@ endfunction
 
 global function FMOFragmentation chains
     // TODO: rename
-    local bonds = FMOFragmentationProtein chains;
+    local bonds = [];
+    bonds = append [bonds, FMOFragmentationProtein chains];
+    bonds = cat append [bonds, FMOFragmentationNucleicAcid chains];
     local frags = PartitionAtoms [cat cAtoms chains, bonds];
     local terms = cat (frags | IsCTerminalFragment frags);
     local mask = not app orE app cat apt eqE [bonds, [[terms]]];
