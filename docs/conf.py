@@ -18,8 +18,8 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'fmoe'
-copyright = '2021, Hirotomo Moriwaki, Yusuke Kawashima, Chiduru Watanabe'
-author = 'Hirotomo Moriwaki, Yusuke Kawashima, Chiduru Watanabe'
+copyright = '2021, Hirotomo Moriwaki, Yusuke Kawashima, Kikuko Kamisaka, Chiduru Watanabe'
+author = 'Hirotomo Moriwaki, Yusuke Kawashima, Kikuko Kamisaka, Chiduru Watanabe'
 
 
 # -- General configuration ---------------------------------------------------

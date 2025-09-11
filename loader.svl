@@ -4,16 +4,18 @@ global fmoe_templates;
 function InitializeFMOe opts
     opts = tagcat [opts, [templates: '']];
     local path = fpath (modenv[]).filename;
+
     ReadMenuFile fcat [path, 'menu-fmoe'];
     local s, fmoe_svls = cat[
       flist[fcat [path, 'fmoe', 'model'], '*.svl'],
       flist[fcat [path, 'fmoe', 'view'], '*.svl'],
       flist[fcat [path, 'fmoe', 'presenter'], '*.svl']
     ];
+
     for s in fmoe_svls loop
       load s;
     endloop
     
-    ReadMenuFile fcat [path, 'fmoe', 'menu.svl'];
+    //ReadMenuFile fcat [path, 'fmoe', 'menu.svl'];
     fmoe_templates = opts.templates;
 endfunction

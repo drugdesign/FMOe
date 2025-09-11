@@ -1,4 +1,5 @@
 &CNTRL
+  Title='FMOe template file based on mkinp_openver1rev20.py'
   Method='MP2'
   Memory=8000
   ReadGeom='{{{BASENAME}}}.pdb'
@@ -16,13 +17,11 @@
 /
 &OPTCNTRL
 /
-&MLFMO
-/
 &MFMO
 /
-&XUFF
-/
 &SCZV
+/
+&XUFF
 /
 &MP2
 /
@@ -34,9 +33,11 @@
 /
 &LMP2
 /
+&LRD
+/
 &DFT
 /
-&PIEDA
+&ANALYSIS
 /
 &BSSE
 /
@@ -63,6 +64,8 @@
 &GF2
 /
 &CCPT
+/
+&XYZ
 /
 {{{ABINITMP_FRAGMENT}}}
 &MDCNTRL

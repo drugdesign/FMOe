@@ -709,6 +709,11 @@ global function FMOEFragmentationGUI opts
     endif
     local templates = GetTemplates fmoe_templates;
 
+    local default_tmpl = 'sample.ajf';
+    
+    WindowSetAttr [wkey, [select_template: [text: templates]]];
+    WindowSetData [wkey, [select_template: default_tmpl]];
+
     local state = [
         merge: opts.merge,
         hybrid: opts.hybrid,

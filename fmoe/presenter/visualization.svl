@@ -1,6 +1,8 @@
 #set title 'fmoe:visualization'
 
 function _Atoms;
+function ViewCenter;
+function fmoe_Open;
 
 const HARTREE = 627.509474;
 const RESOLUTION = 1000;
@@ -46,7 +48,6 @@ const STANDARD_RESIDUES = [
     'ACE', 'NME'
 ];
 
-
 local function Cpf2SvlExePath []
     local env = modenv [];
     local exe = fcat [fpath env.filename, '..', '..', 'bin', tok_cat ['cpf2svl.', MOE_ARCH, '.exe']];
@@ -54,7 +55,6 @@ local function Cpf2SvlExePath []
         return exe;
     endif
 endfunction
-
 
 global function OpenCheckPointFile path
     local msg = Message [0, twrite ['Parsing CPF file {}...', path]];
@@ -133,6 +133,7 @@ global function CreateMoleculeFromCPF cpf
     local name = ftail fbase cpf(CPF_FILE_PATH);
     cSetTag [chains, name];
     cSetName [chains, apt tok_cat [name, prefixes]];
+    ViewCenter cat cAtoms chains;
     return chains;
 endfunction
 
@@ -297,7 +298,7 @@ local function GetFragResKeys [cpf, chains]
 endfunction
 
 
-local function _SetRGBByIfie [frag_atoms, frag_residues, ifiesum, options]
+global function _SetRGBByIfie [frag_atoms, frag_residues, ifiesum, options]
     local scaled = LinearScale [options.range, ifiesum];
     local colors = app RGBToNumber RGBColorScale [options.rgbmin, options.rgb0, options.rgbmax, scaled];
     colors[options.ligand_indices] = options.ligandrgb;
@@ -322,7 +323,7 @@ local function SetColorBy [chains, colorall]
 endfunction
 
 
-global function SetRGBByIfie [cpf, chains, ligand_frags, options]
+local function SetRGBByIfie [cpf, chains, ligand_frags, options]
     local range = options.range,
         rgbmin = options.rgbmin,
         rgb0 = options.rgb0,
@@ -386,7 +387,11 @@ const MAIN_PANEL = [
             Button: [text: 'set', name: 'set_ligand', onTrigger: 'return'],
             Color: [name: 'ligandrgb', onTrigger: 'return'],
             Label: [extendH: 1],
-            Button: [text: 'list', name: 'listup_ifie']
+            Label: [text: 'List: ', alignment: 'right', font: 'mediumFixedBold'],
+            Button: [text: '    IFIE    ', name: 'listup_ifie'],
+            // --- added ---
+            Button: [text: 'Charge (atom)', name: 'listup_charge_atom', onTrigger: 'return'],
+            Button: [text: 'Charge (frag)', name: 'listup_charge_frag', onTrigger: 'return']
         ],
         Hbox: [
             extendH: 1,
@@ -502,9 +507,11 @@ local function EnergyInspector [cpf, chains, ifies]
 endfunction
 
 
+//----- IFIE list
+
 const IFIE_LIST = [
     name: 'ifie list',
-    title: 'ifie list',
+    title: 'IFIE list',
     windowName: 'ifie list',
     Vbox: [
         extendH: 1,
@@ -522,21 +529,23 @@ const IFIE_LIST = [
             extendV: 1,
             header: '#{+5n}\tname{6t}\tMP2{+12n}\tHF{+12n}\tES{+12n}\tEX{+12n}\tCT{+12n}\tDI{+12n}\tMain comp.{+12n}',
             len: 50,
-            width: 120,
+            width: 115,
             multiSelect: 1,
-            sortEnable: 1
+            sortEnable: 1,
+            onTrigger: 'return'
         ]
     ]
 ];
 
 
+// IFIE list window: sync list selection -> MOE residue/atom selection
 local function IfieList [cpf, frags]
     local wkey = WindowCreate IFIE_LIST;
     WindowShow wkey;
 
+    // build IFIE table
     local frag_names = GetFragNames cpf;
-    local ifie = SumIfie [cpf, frags, ['ES', 'EX', 'CT', 'DI']];
-
+    local ifie = SumIfie [cpf, frags, ['ES','EX','CT','DI']];
     local ifies = [];
     local i;
     for i in igen cpf(CPF_NUM_FRAGS) loop
@@ -546,20 +555,228 @@ local function IfieList [cpf, frags]
         local di = ifie.DI(i) * HARTREE;
         local hf = es + ex + ct;
         local mp2 = hf + di;
-        local main_comp = ['ES', 'EX', 'CT', 'DI'] (x_max abs [es, ex, ct, di]);
-        ifies[i] = twrite ['{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}', i, frag_names(i), mp2, hf, es, ex, ct, di, main_comp];
-    endloop
+        local main_comp = ['ES','EX','CT','DI'](x_max abs [es,ex,ct,di]);
+        ifies[i] = twrite['{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}',
+                          i, frag_names(i), mp2, hf, es, ex, ct, di, main_comp];
+    endloop;
 
+    // update window list
     WindowSetAttr [wkey, [
         ligand: [text: FormatLigands [frag_names, frags]],
-        list: [text: ifies]
+        list:   [text: ifies]
     ]];
 
-            // text: ['1\thoge\t32.1\t321\t1\t1\t3\t1']
+    // precompute residue keys/uids (faster)
+    local all_atoms = Atoms [];
+    local res_keys  = uniq aResidue all_atoms;
+    local res_uids  = rUID  res_keys;
+
+    // event loop
     loop
         local [values, trigger] = WindowWait wkey;
+        if trigger == 'list' then
+            // selected rows (assumes [[rows]])
+            local rows = values.list(1);
+
+            // clear current selection
+            aSetSelected [all_atoms, 0];
+
+            if length rows then
+                // collect atoms of all selected residues
+                local picked_atoms = [];
+                local row, frag_num, frag_name, uid, mask, rkey;
+            
+                for row in rows loop
+                    
+                    row = app token fieldsplit [string row, "\t"];
+                    
+                    frag_num = first row;
+                    frag_name = second row;
+                    
+                    uid = atoi token splice [string frag_name, 1, 3, [[]]];
+
+                    if isnull uid then continue; endif;
+
+                    mask = m_join [res_uids, uid];
+                    rkey = mget [res_keys, mask];
+                    
+                    if not length rkey then continue; endif;
+
+                    picked_atoms = cat [picked_atoms, rAtoms rkey];
+                endloop;
+
+                // apply selection once (multi-select OK)
+                if length picked_atoms then
+                    aSetSelected [picked_atoms, 1];
+                endif;
+            endif;
+        endif;
+    endloop;
+
+    WindowDestroy wkey;
+endfunction
+
+
+//----- Charge list
+
+// Window definition for the charge list viewer
+const CHARGE_LIST = [
+    name: 'charge list',
+    title: 'Charge list',
+    windowName: 'charge list',
+    Vbox: [
+        extendH: 0,
+        extendV: 1,
+        Hbox: [
+            Label: [text: 'Scope: '],
+            Label: [name: 'scope', extendH: 1]
+        ],
+        Listbox: [
+            name: 'list',
+            extendH: 0,
+            extendV: 1,
+            // Default header for Atom mode (will be replaced in Fragment mode)
+            len: 50,
+            multiSelect: 1,
+            sortEnable: 1,
+            onTrigger: 'return'
+        ]
+    ]
+];
+
+// Sum an atom-wise array by fragment index; also return atom counts per fragment
+// Atom-wise values -> [frag_ids, fragment-wise sums]
+local function _sum_by_fragment [val, fidx, nfrag]
+    local sums = rep [0.0, nfrag];
+    local i, f;
+    for i = 1, length val loop
+        f = fidx(i);
+        if f >= 1 and f <= nfrag then
+            sums(f) = sums(f) + val(i);
+        endif
     endloop
-   WindowDestroy wkey;
+    // return [[1..nfrag], [sum1..sum_nfrag]]
+    print [igen nfrag, sums];
+    return [igen nfrag, sums];
+endfunction
+
+
+// Show charge list (scope = 'Atom' or 'Fragment')
+local function ChargeList [cpf, scope]
+    // Fetch charge arrays from CPF (index constants provided at the top)
+    // Mulliken
+    local q_mull_hf  = cpf(CPF_ATOM_HF_Mulliken);
+    local q_mull_mp2 = cpf(CPF_ATOM_MP2_Mulliken);
+    // NPA (use NBO slots from CPF)
+    local q_nbo_hf   = cpf(CPF_ATOM_HF_NBO);
+    local q_nbo_mp2  = cpf(CPF_ATOM_MP2_NBO);
+    // RESP
+    local q_resp_hf  = cpf(CPF_ATOM_HF_RESP);
+    local q_resp_mp2 = cpf(CPF_ATOM_MP2_RESP);
+
+    // Defensive: if any array is null, replace with zeros
+    local n_atoms = cpf(CPF_NUM_ATOMS);
+    if q_mull_hf  === [] then q_mull_hf  = rep [0.0, n_atoms]; endif
+    if q_mull_mp2 === [] then q_mull_mp2 = rep [0.0, n_atoms]; endif
+    if q_nbo_hf   === [] then q_nbo_hf   = rep [0.0, n_atoms]; endif
+    if q_nbo_mp2  === [] then q_nbo_mp2  = rep [0.0, n_atoms]; endif
+    if q_resp_hf  === [] then q_resp_hf  = rep [0.0, n_atoms]; endif
+    if q_resp_mp2 === [] then q_resp_mp2 = rep [0.0, n_atoms]; endif
+
+    local wkey = WindowCreate CHARGE_LIST;
+
+    // Replace header for Fragment mode
+    if scope == 'Atom' then
+        WindowSetAttr [wkey, [
+            list: [
+                header: '#{+5n}\tResidue{6t}\tChain{6t}\tElem{6t}\tFrag{+6n}\tMulliken(HF){+12n}\tMulliken(MP2){+12n}\tNPA(HF){+12n}\tNPA(MP2){+12n}\tRESP(HF){+12n}\tRESP(MP2){+12n}',
+                width: 128
+            ]
+        ]];
+    elseif scope == 'Fragment' then
+        WindowSetAttr [wkey, [
+            list: [
+                header: '#{+5n}\tname{6t}\tMulliken(HF){+12n}\tMulliken(MP2){+12n}\tNPA(HF){+12n}\tNPA(MP2){+12n}\tRESP(HF){+12n}\tRESP(MP2){+12n}',
+                width: 103
+            ]
+        ]];
+    endif
+
+    WindowSetAttr [wkey, [scope: [text: scope]]];
+    WindowShow wkey;
+
+    local rows = [];
+
+    if scope == 'Atom' then
+        // ------ Atom-mode rows ------
+        local n = cpf(CPF_NUM_ATOMS), i;
+        for i = 1, n loop
+        // build "ASP25" and split columns
+        local resn  = totok cpf(CPF_ATOM_RES_NAMES)(i);     // e.g., ASP
+        local resid =        cpf(CPF_ATOM_RES_INDICES)(i);  // e.g., 25
+        local chain = totok cpf(CPF_ATOM_CHAIN_ID)(i);      // e.g., A
+        local elem  = totok cpf(CPF_ATOM_ELEMENTS)(i);      // e.g., C
+        local frag  =        cpf(CPF_ATOM_FRAG_INDICES)(i);
+
+        // "ASP25"
+        local residue_label = twrite ['{t:}{f.0}', resn, resid];
+
+        rows(i) = twrite[
+            '{f.0}\t{t:}\t{t:}\t{t:}\t{f.0}\t{f.6}\t{f.6}\t{f.6}\t{f.6}\t{f.6}\t{f.6}',
+            i,            // #
+            residue_label,// "ASP25"
+            chain,        // "A"
+            elem,         // element
+            frag,         // fragment id
+            q_mull_hf(i),  q_mull_mp2(i),
+            q_nbo_hf(i),   q_nbo_mp2(i),
+            q_resp_hf(i),  q_resp_mp2(i)
+        ];
+        endloop
+    else
+        // ------ Fragment-mode rows ------
+        local nfrag = cpf(CPF_NUM_FRAGS);
+        local fidx  = cpf(CPF_ATOM_FRAG_INDICES);
+
+        // get only sums (second)
+        local mull_hf  = second _sum_by_fragment [q_mull_hf,  fidx, nfrag];
+        local mull_mp2 = second _sum_by_fragment [q_mull_mp2, fidx, nfrag];
+        local nbo_hf   = second _sum_by_fragment [q_nbo_hf,   fidx, nfrag];
+        local nbo_mp2  = second _sum_by_fragment [q_nbo_mp2,  fidx, nfrag];
+        local resp_hf  = second _sum_by_fragment [q_resp_hf,  fidx, nfrag];
+        local resp_mp2 = second _sum_by_fragment [q_resp_mp2, fidx, nfrag];
+
+        // labels
+        local frag_names = GetFragNames cpf;
+
+        local f;
+        for f = 1, nfrag loop
+            local fname = frag_names(f);
+            if not isflat fname then fname = fname(1); endif
+            fname = totok fname;
+
+            rows(f) = twrite[
+            '{f.0}\t{t:}\t{f.6}\t{f.6}\t{f.6}\t{f.6}\t{f.6}\t{f.6}',
+            f,           // #
+            fname,       // fragment name (single token)
+            mull_hf(f),  // Mulliken(HF)
+            mull_mp2(f), // Mulliken(MP2)
+            nbo_hf(f),   // NPA(HF)  ← 変数名はnboのままでOK
+            nbo_mp2(f),  // NPA(MP2)
+            resp_hf(f),  // RESP(HF)
+            resp_mp2(f)  // RESP(MP2)
+            ];
+        endloop
+    endif
+
+    WindowSetAttr [wkey, [list: [text: rows]]];
+
+    // Block until user closes the window
+    loop
+        local [vals, trig] = WindowWait wkey;
+        if trig == '' then break; endif
+    endloop
+    WindowDestroy wkey;
 endfunction
 
 
@@ -569,7 +786,7 @@ const DEFAULT_RGB_0 = 0xffffff;
 const DEFAULT_RGB_MAX = 0x0000ff;
 
 
-local function ShowVisualizationPanel [cpf, chains]
+global function ShowVisualizationPanel [cpf, chains]
     local wkey = WindowCreate MAIN_PANEL;
 
     local ligands = dvar_open[];
@@ -713,6 +930,15 @@ local function ShowVisualizationPanel [cpf, chains]
             if second task_fork [master: 'parent'] === 'child' then
                 IfieList [cpf, *ligands];
             endif
+
+        elseif trigger === 'listup_charge_atom' then
+            if second task_fork [master: 'parent'] === 'child' then
+                ChargeList [cpf, 'Atom'];
+            endif
+        elseif trigger === 'listup_charge_frag' then
+            if second task_fork [master: 'parent'] === 'child' then
+                ChargeList [cpf, 'Fragment'];
+            endif
         endif
 
         if orE [tok_keep [trigger, 7] === 'preset_', tok_keep [trigger, 10] === 'component_'] then
@@ -776,22 +1002,5 @@ endfunction
 
 
 global function FMOEVisualizationGUI path
-    if path === [] then
-        path = FilePrompt [title: 'open cpf file', mode: 'open', filter: ['*.cpf', '*.cpf.gz']];
-    else
-        path = fabsname path;
-    endif
-
-    if path === [] then
-        return;
-    endif
-
-    local cpf = OpenCheckPointFile path;
-
-    if cpf === [] then
-        return [];
-    endif
-
-    local chains = CreateMoleculeFromCPF cpf;
-    ShowVisualizationPanel [cpf, chains];
+    fmoe_Open [];
 endfunction

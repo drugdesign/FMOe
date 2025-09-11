@@ -1,0 +1,936 @@
+#svl
+//	fmoe_open.svl	File Open system panel
+
+#set title	'FMOe File Open Panel'
+#set class	'MOE:interactive'
+#set version    '2025.08.14'
+#set main	'fmoe_Open'
+
+//----- GUI statics & constants
+
+const BIGCHUNK = 1048576;                 // 1 MB chunk size
+
+const WIN_NAME = 'MOE: FMOe File Open Panel';
+
+function OpenCheckPointFile;
+function CreateMoleculeFromCPF;
+function ShowVisualizationPanel;
+
+const FORK_OPTIONS = [master:'parent',statics:'share',errmsg:'ignore'];
+
+local function tfork o	    = task_fork tagcat [o, FORK_OPTIONS];
+local function twfork o	    = task_wfork tagcat [o, FORK_OPTIONS];
+local function monitor []   = tfork [prio:0,idle:1];
+
+local function download_dir []
+    local dir = getenv 'DOWNLOADS';
+    if tok_keep [dir, -1] <> '/' then
+	    dir = tok_cat [dir, '/'];
+    endif
+    return dir;
+endfunction
+
+const OPEN = 'Open',
+    FMODB = 'FMODB', FMODB_REST = 'FMODB_REST'
+;
+
+const SERVERS = tag [ [FMODB, FMODB_REST], [
+    ['fmodb',               'https://drugdesign.riken.jp/FMODB/'],
+    ['fmodb.rest.api',      'https://drugdesign.riken.jp/fcgi-bin/fmodbrest']
+]];
+
+static OPEN_wkey;   // main panel key
+
+local function wSetAttr attr	= WindowSetAttr [OPEN_wkey, attr];
+local function wSetData data	= WindowSetData [OPEN_wkey, data];
+local function wGetData names	= last untag WindowGetData [OPEN_wkey, names];
+local function wTrigger trig	= WindowTrigger [OPEN_wkey, trig];
+
+const   // Shell command button text 
+    BUTTON_OK = 'OK', 
+    BUTTON_APPLY = 'Apply', 
+    BUTTON_EDIT = 'Edit...', 
+    BUTTON_COPY = 'Copy...',
+     BUTTON_CANCEL = 'Cancel' ;
+
+local function wGetListSel page
+    return sortuniq (wGetData tok_cat [page, '_list'])(1)(1);
+endfunction
+
+const REFRESH_SEC = 30 * 24 * 60 * 60;   // API index refresh interval(sec) = 30 days
+
+
+//----- functions
+
+// do_open: resolve file → load CPF → build molecule → show viewer
+// - Falls back to file chooser value when no list selection
+// - Single-file only; returns '' on success, or an error message
+local function do_open val
+    // pick file (prefer list selection; otherwise use file chooser)
+    local files = val.files;
+    if not anytrue files then
+        files = val.open_fsb(2);
+    endif
+    if isnull files or length files == 0 then
+        return 'No file selected.';
+    endif
+
+    local filepath = files(1);    // single file only
+
+    // load CPF (OpenCheckPointFile returns [] on failure)
+    local cpf = OpenCheckPointFile filepath;
+    if cpf === [] then
+        return 'Failed to open CPF file.';
+    endif
+
+    // build molecule and open the visualization panel
+    local chains = CreateMoleculeFromCPF cpf;
+    ShowVisualizationPanel [cpf, chains];
+
+    return '';
+endfunction
+
+
+// open_page: file chooser + minimal state holders (files/fcodes/open_op)
+local function open_page []
+
+    // Filters: show CPF files (blank = all)
+    const FILTERS = [
+        '',
+        'CPF Files\t*.cpf'
+    ];
+
+    return [
+        Vbox: [
+            extendH: 1, extendV: 1,
+
+            // file chooser (no auto-open; return on trigger)
+            FSB: [
+                extendH: 1, extendV: 1, flushLeft: 1,
+                name: 'open_fsb', mode: 'none', onTrigger: 'return',
+                multiSelect: 2, type: 'modint',
+                filterList: FILTERS
+            ],
+
+            // hidden data slots for current state
+            Data: [name: 'files'],     // current file selection
+            Data: [name: 'fcodes'],    // detected file types
+            Data: [name: 'open_op'],   // chosen operation
+
+            Hbox: [                    // reserved for future controls
+                flushLeft: 1, spacingH: 'medium'
+            ]
+        ]
+    ];
+endfunction
+
+
+// open_ProcessTrigger: handle Open page events (page/shell/open_fsb)
+// - Returns [data, attr] for WindowSetData/Attr updates
+// - Double-click on FSB triggers OK unless Ctrl is held
+local function open_ProcessTrigger [wkey, val, trig]
+    local data = [], attr = [], files;
+
+    if trig == 'page' then
+        // set button labels; enable only Cancel by default
+        attr.shell.text = [BUTTON_OK, BUTTON_APPLY, BUTTON_CANCEL];
+        attr.shell.sensitive = [0, 0, 1];
+
+    elseif trig == 'shell' then
+        files = val.files;
+        // no file → no-op (e.g., Cancel without selection)
+        if isnull files or length files == 0 then
+            return [data, attr];
+        endif
+
+        if val.shell == BUTTON_OK then
+            // hide panel before launching worker
+            WindowShow [OPEN_wkey, 0];
+            wSetAttr [shell:[windowName:'']];
+        endif
+
+        // run the open action in a child task; show errors if any
+        if 'child' == second tfork [master:'none', errmsg:'show'] then
+            task_settitle [-1, 'MOE: Open'];
+            local msg = do_open val;
+            if istrue msg then Warning msg; endif
+            exit[];
+        endif
+
+        // reset: clear selection; only Cancel enabled
+        attr.shell.sensitive = [0, 0, 1];
+        data = [files: []];
+
+    elseif trig == 'open_fsb' then
+        files = val.open_fsb(2);
+
+        // require existing files
+        if isnull files or anytrue ('file' <> ftype files) then
+            attr.shell.sensitive = [0, 0, 1];   // only Cancel
+            data = [files: []];
+            return [data, attr];
+        endif
+
+        // valid selection → enable OK/Apply/Cancel
+        data = [files: files];
+        attr.shell.sensitive = [1, 1, 1];
+
+        // double-click ⇒ OK (unless Ctrl is held)
+        if bitand [val.open_fsb(3), WMOD_DBL] and
+           not bitand [val.open_fsb(3), WMOD_CTRL] then
+            wTrigger [shell: BUTTON_OK];
+            return [data, attr];
+        endif
+    endif
+
+    return [data, attr];
+endfunction
+
+
+//----- FMODB page: index search & list UI
+
+const FILTER_LEN  = 54;  // input width (chars)
+const LISTBOX_LEN = 15;  // listbox visible rows
+
+// ID search help
+const FMODB_ID_MATCH_HELP =
+    'Search by FMODB ID, PDB ID, UniProt ID, CalculationName, or ChEMBL ID.\n'
+    'To search multiple IDs, separate them with commas and enable "Or".\n'
+    'When checked: match any ID OR any Filter word.\n'
+    'When unchecked: must match both.\n'
+    'Example: 1ERE,1GWR'
+;
+
+// Free-text filter help (matches across all columns)
+const FMODB_FILTER_MATCH_HELP =
+    'Enter words to search across all fields (FMODB ID, PDB ID, Chain, BaseStructure,\n'
+    'CalculationName, UniProt ID, ChEMBL ID, Preferred Name, RegistrationDate).\n'
+    'Separate words with spaces. Matches any word.\n'
+    'Example: xray kinase 1ere'
+;
+
+
+
+// fmodb_page_widgets: build FMODB index/search UI (Listbox, stats, filters).
+// Pure; returns a Vbox for the page 'widgets' handler.
+local function fmodb_page_widgets []
+    return [
+        Vbox: cat [[
+            extendV: 1, extendH: 1,
+
+            // index list
+            Listbox: [
+                name: 'FMODB_list',
+                text: '',
+                header: 'FMODB ID{8}\tPDB ID{4}\tPDB Chain{4}\tBaseStructure{12}\tCalculationName{18}\tUniProt ID{15}\tChEMBL ID{15}\tPreferred Name{25}\tRegistrationDate{10}',
+                type: 'char',
+                onTrigger: 'return',
+                len: LISTBOX_LEN,
+                extendH: 1, extendV: 1, flushLeft: 1, font: 'medium',
+                zebra: 1, sortEnable: 1,
+                multiColumn: 0, multiSelect: 0,
+                bubbleHelp: 'Select one FMODB entry to load.'
+            ],
+
+            // result stats (e.g., "100 entries found")
+            Hbox: [
+                flushLeft: 1, extendH: 1,
+                Label: [
+                    name: 'FMODB_liststats',
+                    text: '',
+                    flushLeft: 1, extendH: 1
+                ]
+            ],
+
+            // filters
+            Mbox: [
+                columns: 2, extendH: 1,
+
+                Text: [
+                    name: 'FMODB_codes', title: 'ID:',
+                    type: 'char', len: FILTER_LEN, onTrigger: 'return',
+                    extendH: 1,
+                    emptyText: ' enter FMODB, PDB, UniProt or ChEMBL ID',
+                    bubbleHelp: FMODB_ID_MATCH_HELP
+                ],
+                Checkbox: [
+                    name: 'FMODB_codesOp',
+                    text: '"Or" with Filter',
+                    bubbleHelp: FMODB_ID_MATCH_HELP
+                ],
+                Text: [
+                    name: 'FMODB_search', title: 'Filter:',
+                    type: 'char', len: FILTER_LEN, onTrigger: 'return',
+                    extendH: 1,
+                    emptyText: ' enter text or text pattern',
+                    bubbleHelp: FMODB_FILTER_MATCH_HELP
+                ]
+            ]
+        ]]
+    ];
+endfunction
+
+
+//----- FMODB: index formatter
+
+// _format_fmodb_entry_line: normalize a 9-field TSV row.
+// Skips short rows; returns tab-joined string (token() handles blanks).
+local function _format_fmodb_entry_line [data]
+
+    // ensure string
+    local line = string data;
+
+    // split by tab
+    local fields = fieldsplit [line, "\t"];
+
+    // validate
+    if length fields < 9 then
+        print twrite ["_format_fmodb_entry_line: parsed = {a:}", fields];
+        return [];
+    endif
+
+    // unpack
+    local [
+        fmodb_id, pdb_id, chain, base, calcname,
+        uniprot, chembl, pname, date
+    ] = fields[[1,2,3,4,5,6,7,8,9]];
+    
+    // format TSV (token() to avoid blanks)
+    return apt twrite [
+        '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}',
+        token fmodb_id,
+        token pdb_id,
+        token chain,
+        token base,
+        token calcname,
+        token uniprot,
+        token chembl,
+        token pname,
+        token date
+    ];
+endfunction
+
+
+//----- FMODB: download via curl
+
+// _download_to_file_via_curl: GET url → save to file → return lines.
+// - Reads in 1 MB chunks, CRLF-splits, keeps tokenized lines.
+// - If skip_header == 1: drop first line; always drop trailing blank.
+local function _download_to_file_via_curl [url, filepath, skip_header]
+
+    const CHUNK = pow [2, 20], BLOCK = 64;
+    local key = curl_open url;
+    if isnull key then
+        print "----curl_open failed for:";
+        print url;
+        return [];
+    endif
+
+    local i = 0, x = 0, nbytes = 0;
+    local buf = [], data = [], lines = rep [[], BLOCK];
+    local entries = [];
+
+    while length (data = curl_read[key, CHUNK]) loop
+        if i == length lines then
+            lines = append [lines, app null lines];
+        endif
+
+        lines(i = inc i) = wordsplit [buf = cat [buf, data], "\r\n"];
+
+        if not indexof [last buf, "\r\n"] then
+            buf = last lines(i);
+            lines(i) = droplast lines(i);
+        else
+            buf = [];
+        endif
+
+        nbytes = nbytes + length data;
+
+        local line;
+        for line in lines(i) loop
+            entries(x = inc x) = token line;
+        endloop
+    endloop
+
+    curl_close key;
+
+    // write file
+    local fsave = _fopenw filepath;
+    if not fsave then
+        print "----_fopenw failed for saving:";
+        print filepath;
+    else
+        for line in entries loop
+            fwriteb [fsave, 'line', string line];
+        endloop
+        fclose fsave;
+        print "---Saved to:";
+        print filepath;
+    endif
+
+    // guard: no lines
+    if length entries == 0 then
+        return [];
+    endif
+
+    // build result (drop header if requested; always drop trailing blank)
+    local result;
+    if skip_header === 1 then
+        result = droplast shift [entries, -1];
+    else
+        result = entries;
+    endif
+
+    return result;
+endfunction
+
+
+// _fmodb_load_index_from_api: fetch FMODB index (TSV) and save locally.
+// Returns tokenized lines without header; trailing blank removed.
+local function _fmodb_load_index_from_api []
+    local url = tok_cat [SERVERS.FMODB_REST[2], '/download/fmoe/entries/index'];
+    local filepath = tok_cat [download_dir[], 'fmoe_entries_index.txt'];
+
+    // downloader prints errors; returns [] on failure
+    local entries = _download_to_file_via_curl [url, filepath, skip_header:1];
+
+    return entries;
+endfunction
+
+
+// fmodb_load_cpf_from_api: download CPF for the given FMODB ID; returns local filepath.
+local function fmodb_load_cpf_from_api [page, fmodb_id]
+    local url = tok_cat [SERVERS.FMODB_REST[2], '/download/cpf/', fmodb_id];
+    local filepath = tok_cat [download_dir[], fmodb_id, '.cpf'];
+
+    // downloader prints errors on failure
+    _download_to_file_via_curl [url, filepath, skip_header:0];
+
+    return filepath;
+endfunction
+
+
+// LoadCPFAndShow: open CPF → build molecule → show visualization.
+// Returns [cpf, chains]; exits with error if open fails.
+local function LoadCPFAndShow [filepath]
+    local cpf = OpenCheckPointFile filepath;
+    if cpf === [] then
+        exit twrite ['Failed to open CPF file: {}', filepath];
+    endif
+
+    local chains = CreateMoleculeFromCPF cpf;
+    ShowVisualizationPanel [cpf, chains];
+
+    return [cpf, chains];
+endfunction
+
+
+//----- FMODB listbox display
+
+static FMODB_data;    // cache for parsed index rows
+
+// fmodb_parse_lines_to_struct: parse TSV lines → fill FMODB_data.(page).update.
+// Columns: FMODB ID / PDB_ID / PDB_Chain / BaseStructure / CalculationName /
+//          UniProt_ID / ChEMBL_ID / Preferred_Name / RegistrationDate
+local function fmodb_parse_lines_to_struct [page, lines]
+
+    local N = length lines;
+    local fmodb_ids       = rep ['', N];
+    local pdb_ids         = rep ['', N];
+    local pdb_chains      = rep ['', N];
+    local base_structure  = rep ['', N];
+    local calc_name       = rep ['', N];
+    local uniprot_ids     = rep ['', N];
+    local chembl_ids      = rep ['', N];
+    local preferred_names = rep ['', N];
+    local regist_date     = rep ['', N];
+    local qtext           = rep ['', N];
+    local text_list       = rep ['', N];
+    local fields;
+
+    //------------
+    // FMODB_data.(page).update = [
+    //    fmodb_ids,        // FMODB IDs (lowercased), e.g., ["5p4np", "5p4nq", ...]
+    //    pdb_ids,          // PDB IDs (lowercased), e.g., ["1ere", "2abc", ...]
+    //    pdb_chains,       // PDB chains (lowercased), e.g., ["a", "b", ...]
+    //    base_structure,   // structure type (lowercased), e.g., ["x-ray", "nmr", ...]
+    //    calc_name,        // calculation name (lowercased), e.g., ["1ere-d-xray7", ...]
+    //    uniprot_ids,      // UniProt IDs (lowercased), e.g., ["p03372", ...]
+    //    chembl_ids,       // ChEMBL IDs (lowercased), e.g., ["chembl206", ...]
+    //    preferred_names,  // preferred names (lowercased), e.g., ["estrogen receptor alpha", ...]
+    //    regist_date,      // registration dates (lowercased), e.g., ["2017-02-24", ...]
+    //    text_list,        // display: original line (case preserved)
+    //    qtext             // full-text search: lowercased line
+    //];
+    //------------
+
+    local i = 0, line;
+    for line in lines loop
+        fields = fieldsplit [string line, "\t"];
+        if length fields < 9 then continue; endif;
+
+        i = i + 1;
+        fmodb_ids(i)       = tolower fields(1);
+        pdb_ids(i)         = tolower fields(2);
+        pdb_chains(i)      = tolower fields(3);
+        base_structure(i)  = tolower fields(4);
+        calc_name(i)       = tolower fields(5);
+        uniprot_ids(i)     = tolower fields(6);
+        chembl_ids(i)      = tolower fields(7);
+        preferred_names(i) = tolower fields(8);
+        regist_date(i)     = tolower fields(9);
+        qtext(i)           = tolower line;
+        text_list(i)       = line;
+
+        // progress update every 10000 rows (update UI)
+        if mod [i, 10000] == 0 then
+            wSetAttr [
+                FMODB_list: [text: keep [text_list, i]],
+                FMODB_liststats: [text: tok_cat ['0 Selected, ', totok i, ' entries']]
+            ];
+        endif
+    endloop
+
+    // store into struct
+    FMODB_data.(page).update = [
+        fmodb_ids,
+        pdb_ids,
+        pdb_chains,
+        base_structure,
+        calc_name,
+        uniprot_ids,
+        chembl_ids,
+        preferred_names,
+        regist_date,
+        text_list,
+        qtext
+    ];
+endfunction
+
+
+// fmodb_display_list: build display rows from cached index.
+// - Applies ID and free-text filters
+// - "Or with Filter" checkbox: ID mask OR free-text mask
+// - Updates stats/sensitivity via wSetAttr; returns text_list
+local function fmodb_display_list [wkey, val, page]
+
+    local code_filter   = tolower val.(tok_cat[page, '_codes']);
+    local search_filter = tolower val.(tok_cat[page, '_search']);
+    local or_with_filter= val.(tok_cat[page, '_codesOp']);
+
+    // cached columns (lowercased) + original lines
+    local fmodb_ids       = FMODB_data.(page).update(1);
+    local pdb_ids         = FMODB_data.(page).update(2);
+    local pdb_chains      = FMODB_data.(page).update(3);
+    local base_structure  = FMODB_data.(page).update(4);
+    local calc_name       = FMODB_data.(page).update(5);
+    local uniprot_ids     = FMODB_data.(page).update(6);
+    local chembl_ids      = FMODB_data.(page).update(7);
+    local preferred_names = FMODB_data.(page).update(8);
+    local regist_date     = FMODB_data.(page).update(9);
+    local fulltxt         = FMODB_data.(page).update(10); // original lines (case-preserved)
+    local qtext           = FMODB_data.(page).update(11); // full-text (lowercased)
+
+    local text_list = fulltxt;
+
+    if length code_filter > 0 or length search_filter > 0 then
+        // start with all-true mask
+        local mask = one fulltxt;
+
+        // ID-side filter
+        if length string code_filter > 0 then
+            local code_words = app tok_cat apt cat ['*', app token fieldsplit[string code_filter, ","], '*'];
+            local mask_fmodb   = m_findmatch [code_words, app token fmodb_ids];
+            local mask_pdb     = m_findmatch [code_words, app token pdb_ids];
+            local mask_uniprot = m_findmatch [code_words, app token uniprot_ids];
+            local mask_calc    = m_findmatch [code_words, app token calc_name];
+            local mask_chembl  = m_findmatch [code_words, app token chembl_ids];
+            mask = mask and (mask_fmodb or mask_pdb or mask_uniprot or mask_calc or mask_chembl);
+        endif
+
+        // free-text filter (comma-separated)
+        if length string search_filter > 0 then
+            local search_words;
+            search_words = app tok_cat apt cat ['*', app token fieldsplit[string search_filter, ","], '*'];
+            mask = mask and m_findmatch [search_words, qtext];
+        endif
+
+        text_list = fulltxt | mask;
+    endif
+
+    // update stats & enable controls after computing text_list
+    local stat_text = tok_cat ['0 Selected, ', totok length text_list, ' entries'];
+    wSetAttr [
+        FMODB_liststats:[text: stat_text],
+        FMODB_codes:[sensitive: 1],
+        FMODB_search:[sensitive: 1],
+        FMODB_list:[sensitive: 1]
+    ];
+
+    return text_list;
+endfunction
+
+
+
+//---- FMODB page events
+
+// fmodb_UpdateAttr: update list text & stats; return tagged [val, attr].
+// - Expects opt.text_list (array of display rows). Prints error if missing.
+local function fmodb_UpdateAttr [page, val, attr, opt]
+
+    // get text_list
+    local text_list;
+    if not isnull opt.text_list then
+        text_list = opt.text_list;
+    else
+        print "----text_list is missing in opt";   // keep error print
+        
+        text_list = [];
+
+        wSetAttr [
+            FMODB_list:      [text: text_list],
+            FMODB_liststats: [text: '0 Selected, 0 entries']
+        ];
+
+        attr.FMODB_list      = [text: text_list];
+        attr.FMODB_liststats = [text: '0 Selected, 0 entries'];
+
+        [val, attr] = untag attr;
+        val = select [tok_cat [page, val], val, m_findmatch ['_*', val]];
+        
+        return tag [val, attr];
+    endif
+
+    // build status text: "<nsel> Selected, <ntotal> entries"
+    local selected  = wGetListSel page;
+    local stat_text = tok_cat [totok length selected, ' Selected, ', totok length text_list, ' entries'];
+
+    // stage into attr (for return)
+    attr.FMODB_list      = [text: text_list];
+    attr.FMODB_liststats = [text: stat_text];
+
+    // apply to UI
+    wSetAttr [
+        FMODB_list:      [text: text_list],
+        FMODB_liststats: [text: stat_text]
+    ];
+
+    // sanitize val: drop temporary tags ('_*'), re-prefix with page
+    [val, attr] = untag attr;
+    val = select [tok_cat [page, val], val, m_findmatch ['_*', val]];
+
+    return tag [val, attr];
+endfunction
+
+
+// FMODB init: show "Loading..." and disable inputs
+local function fmodb_Init [wkey, val, trig, page]
+    wSetAttr [
+        FMODB_liststats:[text:'Loading entries... Please wait...'],
+        FMODB_codes:[sensitive:0],
+        FMODB_search:[sensitive:0],
+        FMODB_list:[sensitive:0]
+    ];
+endfunction
+
+
+// fmodb_Trigger: handle FMODB page events (shell, filters, list)
+local function fmodb_Trigger [wkey, val, trig, page]
+    local data = [], attr = [];
+    local _trig = trig, i;
+
+    // normalize trigger name to page-local suffix (e.g., "_codes")
+    if i = indexof ["_", string trig] then
+        _trig = tok_drop [trig, dec i];
+    endif
+
+    // Apply action: download CPF and load into MOE (OK closes panel)
+    function Apply ok
+        local selected = val.(tok_cat [page, '_list']);
+        local codes    = val.(tok_cat [page, '_codes']);
+        if length selected < 1 and isspace codes then return; endif
+
+        local line     = selected(1);
+        local fields   = wordsplit [string line, "\t"];
+        local fmodb_id = token fields(1);
+
+        local filepath = fmodb_load_cpf_from_api [page, fmodb_id];
+
+        if ok then
+            WindowShow [OPEN_wkey, 0];
+            LoadCPFAndShow [filepath];
+            exit[];
+        endif
+
+        if 'child' == second tfork [master:'none', errmsg:'show'] then
+            task_settitle [-1, '!FMODB Copy to MOE'];
+            LoadCPFAndShow [filepath];
+            exit[];
+        endif
+    endfunction
+
+    // Rebuild list and refresh UI
+    function Display []
+        local tl = fmodb_display_list [wkey, val, page];
+        wSetAttr [FMODB_list:[text: tl]];
+    endfunction
+
+    if trig == 'page' then
+        attr.shell.text = [BUTTON_OK, BUTTON_APPLY, BUTTON_CANCEL];
+        attr.shell.sensitive = [0, 0, 1];
+
+    elseif trig == 'shell' then
+        if val.(trig) == BUTTON_OK then
+            Apply 1;
+        elseif val.(trig) == BUTTON_APPLY then
+            Apply 0;
+        elseif val.(trig) == BUTTON_CANCEL then
+            exit[];
+        endif
+
+    elseif _trig == '_codes' or _trig == '_search' or _trig == '_codesOp' or _trig == '_searchOp' then
+        Display [];
+
+    elseif _trig == '_list' then
+        // (optional) handle double-click-to-OK here if needed
+    endif
+
+    return [data, attr];
+endfunction
+
+
+// _fmodb_read_lines_from_file: read saved FMODB index (.txt).
+// Skips header; returns body lines as char vectors (API-compatible).
+local function _fmodb_read_lines_from_file [filename]
+
+    local lines = [];
+    local f = fopenr filename;
+    if isnull f then
+        print '--- failed to open file:';
+        print filename;
+        return [];
+    endif
+
+    local line;
+
+    // skip header line
+    line = freadb [f, 'line', 1];
+
+    // read body lines (string → char vector)
+    local i = 1;
+    loop
+        line = freadb [f, 'line', 1];
+        if not length line then
+            break;
+        endif
+        lines(i) = app token line;   // API-like char vector
+        i = i + 1;
+    endloop
+
+    fclose f;
+    return lines;
+endfunction
+
+
+// fmodb_Monitor: load/refresh index (first time), apply filters, update listbox.
+local function fmodb_Monitor [wkey, val, page]
+
+    static mdata_prev;
+
+    // track filter state (for change detection)
+    local mdata = [
+        val.(tok_cat[page,'_codes']),
+        val.(tok_cat[page,'_codesOp']),
+        val.(tok_cat[page,'_search']),
+        val.(tok_cat[page,'_searchOp'])
+    ];
+
+    // first load: read from local cache or API (using REFRESH_SEC)
+    if isnull FMODB_data then
+        local saved_file = tok_cat [download_dir[], 'fmoe_entries_index.txt'];
+        local downloaded_lines, needs_refresh = 1;
+
+        if ftype saved_file == 'file' then
+            local mtime = fdate saved_file;
+            local now   = clock[];
+            if not isnull mtime and (now - mtime) < REFRESH_SEC and (now - mtime) >= 0 then
+                needs_refresh = 0;
+            endif
+        endif
+
+        if needs_refresh then
+            // try API first; fallback to local if API failed
+            downloaded_lines = _fmodb_load_index_from_api[];
+            if (isnull downloaded_lines or length downloaded_lines == 0) and ftype saved_file == 'file' then
+                downloaded_lines = _fmodb_read_lines_from_file [saved_file];
+            endif
+        else
+            downloaded_lines = _fmodb_read_lines_from_file [saved_file];
+        endif
+
+        // abort on failure (errors are printed in the called functions)
+        if isnull downloaded_lines or length downloaded_lines == 0 then
+            return [[], []];
+        endif
+
+        // cache structured columns for filtering/display
+        fmodb_parse_lines_to_struct [page, downloaded_lines];
+    endif
+
+    // build display list from cache and update UI
+    local text_list = fmodb_display_list [wkey, val, page];
+    local attr = fmodb_UpdateAttr [page, val, [], [text_list: text_list]];
+    attr.shell.sensitive = [1, 1, 1];  // enable OK / Apply / Cancel
+
+    // record filter state
+    if neL [mdata, mdata_prev] then
+        mdata_prev = mdata;
+    endif
+
+    return [[], attr];
+endfunction
+
+
+//----- Entry points
+
+local function File_Page [cmd, arg]
+    const OPEN_ICON = 'openyellow';
+    if      cmd == 'icon'       then return gr_icon [OPEN_ICON, 48, 0];
+    elseif  cmd == 'icon_help'  then return 'Open file.';
+    elseif  cmd == 'widgets'    then return open_page [];
+    elseif  cmd == 'init'       then return;
+    elseif  cmd == 'trigger'    then return open_ProcessTrigger arg;
+    elseif  cmd == 'monitor'    then return;
+    elseif  cmd == 'title'      then return 'Local File';
+    endif
+endfunction
+
+local function get_FMOe_path []
+    return GetRC['FMOe_path', ''];
+endfunction
+
+// FMODB_Page: route FMODB page commands (icon/help/widgets/init/trigger/monitor/title).
+local function FMODB_Page [cmd, arg]
+    if      cmd == 'icon' then
+        return gr_icon [
+            tok_cat[get_FMOe_path[], '/icon/FMODB-Logo.ico'],
+            48, 'foreground'
+        ];
+    elseif  cmd == 'icon_help'  then return 'Load CPF file from FMODB.';
+    elseif  cmd == 'widgets'    then return fmodb_page_widgets[];
+    elseif  cmd == 'init'       then return fmodb_Init    append [arg, FMODB];
+    elseif  cmd == 'trigger'    then return fmodb_Trigger append [arg, FMODB];
+    elseif  cmd == 'monitor'    then return fmodb_Monitor append [arg, FMODB];
+    elseif  cmd == 'cancel'     then exit[];
+    elseif  cmd == 'title'      then return tok_cat ['FMODB (', SERVERS.FMODB[2], ')'];
+    endif
+endfunction
+
+
+// -------- FMOe Open Panel (entry) --------
+
+global function fmoe_Open []
+
+    // early exits
+    if MOE_BATCH then return []; endif
+    if WindowShow [WIN_NAME, 1] then return []; endif
+    if second task_fork [statics:'new'] <> 'child' then return; endif
+
+    task_settitle [-1, WIN_NAME];
+
+    // page handlers: Local File, FMODB
+    local pageHandlers = [#File_Page, #FMODB_Page];
+
+    // create window
+    local windowID = WindowCreate [
+        title:'Open', windowName:WIN_NAME, helpPage:'Open', name:'shell',
+        onTrigger:'return',
+        Hbox: [
+            extendH:1, extendV:1,
+            // left: page selector
+            Radio: [
+                name:'page', type:'int', columns:1, extendV:1, onTrigger:'return',
+                graphics: apt call [pageHandlers, 'icon'],
+                grScale:'none',
+                bubbleHelp: app token apt call [pageHandlers, 'icon_help']
+            ],
+            // right: page contents
+            Pager: cat [
+                [name:'pager', extendH:1, extendV:1],
+                tag ['Group', apt call [pageHandlers, 'widgets']]
+            ]
+        ]
+    ];
+    if isnull windowID then
+        print 'Error: Failed to create window.';
+        return [];
+    endif
+
+    // expose key to helpers
+    OPEN_wkey = windowID;
+
+    // show and init pages
+    WindowShow [windowID, 1];
+    apt call [pageHandlers, nest ['init', windowID]];
+
+    // apply data/attr to window (wrapper-friendly)
+    function SetWindowDataAndAttr [data, attr]
+        if length attr and istagged attr then
+            wSetAttr attr;
+        endif
+        if length data and istagged data then
+            wSetData data;
+        endif
+    endfunction
+
+    // event dispatcher for the shell
+    function HandleTrigger [values, trigger]
+        // Cancel: delegate to page, then exit if no override
+        if trigger == 'shell' and values.shell == BUTTON_CANCEL then
+            local result = call [pageHandlers(values.page), ['cancel', windowID]];
+            if isnull result then exit[]; endif
+        endif
+
+        // page switch: update title
+        if trigger == 'page' then
+            local title = call [pageHandlers(values.page), 'title'];
+            wSetAttr [shell:[title: tok_cat ['Open ', token title]]];
+        endif
+
+        // let page handle the trigger
+        local [data, attr] = call [
+            pageHandlers(values.page), ['trigger', [windowID, values, trigger]]
+        ];
+
+        // keep pager in sync after page switch
+        if trigger == 'page' then
+            attr.pager.page = values.page;
+        endif
+
+        SetWindowDataAndAttr [data, attr];
+    endfunction
+
+    // initial page
+    HandleTrigger [[page:1, shell:''], 'page'];
+
+    // background monitor: call each page's 'monitor' periodically
+    if second task_fork [idle:1, prio:0, master:'parent'] == 'child' then
+        task_settitle [-1, '!FMOe: Monitor'];
+        loop
+            local mval = WindowValues windowID;
+            local [mdata, mattr] = call [
+                pageHandlers(mval.page), ['monitor', [windowID, mval]]
+            ];
+            SetWindowDataAndAttr [mdata, mattr];
+            sleep 0.25;
+        endloop
+    endif
+
+    // main event loop
+    loop
+        local [values, trigger] = WindowWait windowID;
+        HandleTrigger [values, trigger];
+    endloop
+
+    exit[];
+endfunction

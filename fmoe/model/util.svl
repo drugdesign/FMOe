@@ -96,7 +96,7 @@ endfunction
 
 
 function GetTemplates path
-/*list files in the tenplate folder.
+/* list files in the template folder.
 
     :param path: templates directory path.
     :type path: token
@@ -105,9 +105,5 @@ function GetTemplates path
 */
     print path;
     local templates = ftail flist path;
-    if length templates > 1 then
-        return templates | not eqE [templates, 'sample.ajf'];
-    else
-        return templates;
-    endif
+    return templates;
 endfunction

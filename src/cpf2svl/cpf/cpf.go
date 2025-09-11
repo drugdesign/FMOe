@@ -14,8 +14,10 @@ import (
 type Version int
 
 const (
-	// Ver7_2 is Ver.7.2 CPF
+	// Ver7_2 is CPF Ver.7.2
 	Ver7_2 Version = 72
+	// Ver7_0 is CPF Ver.7.0 (MIZUHO 4.0)
+	Ver7_0 Version = 70 
 	// Ver4_201MIZUHO is Ver.4.201 (MIZUHO)
 	Ver4_201MIZUHO = 4201
 	// Open1.0 rev23
@@ -100,6 +102,8 @@ func (cpf *cpfParser) parseVersion() error {
 
 	if strings.HasPrefix(line, "CPF Ver.7.2") {
 		cpf.result.Version = Ver7_2
+	} else if strings.HasPrefix(line, "CPF Ver.7.0 (MIZUHO 4.0)") {
+		cpf.result.Version = Ver7_0
 	} else if strings.HasPrefix(line, "CPF Ver.4.201 (MIZUHO)") {
 		cpf.result.Version = Ver4_201MIZUHO
 	} else if strings.HasPrefix(line, "CPF Ver.4.201") {
@@ -564,7 +568,7 @@ func (cpf *cpfParser) parseDimersVer72(numDimers int) error {
 	if cpf.result.Version == Ver4_201MIZUHO {
 		exStart = 288
 		ctStart = 312
-	} else if cpf.result.Version == Ver7_2 {
+	} else if cpf.result.Version == Ver7_2 || cpf.result.Version == Ver7_0 {
 		exStart = 336
 		ctStart = 360
 	}
@@ -680,19 +684,17 @@ func (cpf *cpfParser) parse() (*Cpf, error) {
 	if err := cpf.parseVersion(); err != nil {
 		return nil, errors.Wrap(err, "parse version")
 	}
-	if cpf.result.Version == 72 {
+
+	switch cpf.result.Version {
+	case 72, 70, 4201:
 		return cpf.parseVer72()
-	}
-	if cpf.result.Version == 4201 {
-		return cpf.parseVer72()
-	}
-	if cpf.result.Version == 1010 {
+	case 1010:
 		return cpf.parseVer1010()
-	}
-	if cpf.result.Version == 1023 {
+	case 1023:
 		return cpf.parseVer1023()
+	default:
+		return nil, errors.Errorf("non-supported version: %d", cpf.result.Version)
 	}
-	return nil, errors.Errorf("non-supported version.")
 }
 
 func (cpf *cpfParser) parseVer72() (*Cpf, error) {
